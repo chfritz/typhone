@@ -1,15 +1,39 @@
 <head>
-  <title>type2phone</title>
+  <title>Type2Phone</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 </head>
 
 <body>
-  <h1>Welcome to Meteor!</h1>
-  
-  {{> hello}}
 </body>
 
-<template name="hello">
-  <button>Click Me</button>
-  <p>You've pressed the button {{counter}} times.</p>
-  {{debug}}
+
+<template name="layout">
+  {{#ionBody}}
+    {{> ionNavBar class="bar-positive"}}
+    {{#ionNavView}}
+      {{> yield}}
+    {{/ionNavView}}
+  {{/ionBody}}
+</template>
+
+<template name="mobile">
+  {{#contentFor "headerButtonLeft"}}
+  {{>ionNavBackButton}}
+  {{/contentFor}}
+  
+  {{#contentFor "headerTitle"}}
+  <h1 class="title">Type2Phone</h1>
+  {{/contentFor}}
+  
+  {{#ionView}}
+  {{#ionContent}}
+
+  <label class="item item-input">
+    <textarea placeholder="Clipboard">
+      {{clipboard}}
+    </textarea>
+  </label>
+  
+  {{/ionContent}}
+  {{/ionView}}
 </template>

@@ -1,25 +1,24 @@
 
-// if (Meteor.isCordova) {    
-//     cordova.plugins.clipboard.copy("text from meteor");
-// }
 
-// counter starts at 0
-Session.setDefault('counter', 0);
-
-Template.hello.helpers({
-    counter: function () {
-        return Session.get('counter');
-    },
-    debug: function() {
-        console.log(cordova.plugins.clipboard);
-        cordova.plugins.clipboard.copy("text from meteor2");
+Template.mobile.helpers({
+    clipboard: function() {
+        var c = Clipboard.findOne();
+        if (c) {
+            return c.text;
+        }
     }
 });
 
-Template.hello.events({
-    'click button': function () {
-        // increment the counter when button is clicked
-        Session.set('counter', Session.get('counter') + 1);
+Template.mobile.onRendered(function() {
+    console.log("onRendered");
+    if (Meteor.isCordova) {
+        console.log("querying");
+        var query = Clipboard.find();
+        query.observe({
+            changed: function(newDoc, oldDoc) {
+                console.log("change", newDoc, newDoc.text);
+                cordova.plugins.clipboard.copy(newDoc.text);
+            }
+        });
     }
 });
-
