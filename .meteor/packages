@@ -5,10 +5,10 @@
 # but you can also edit it by hand.
 
 meteor-platform
-autopublish
 insecure
 meteoric:ionic
 iron:router
 fourseven:scss@2.0.0
 meteoric:ionic-sass
 meteoric:ionicons-sass
+dschulz:jquery-qrcode

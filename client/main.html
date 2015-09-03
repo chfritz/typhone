@@ -28,12 +28,28 @@
   {{#ionView}}
   {{#ionContent}}
 
+  {{#if text}}
   <label class="item item-input">
-    <textarea placeholder="Clipboard">
-      {{clipboard}}
-    </textarea>
+    {{text}}
   </label>
+  {{else}}
+  <button class="button button-large icon ion-camera qr"></button>
+  {{/if}}
   
   {{/ionContent}}
   {{/ionView}}
+</template>
+
+
+<template name="web">
+  <div style="width: 80%; margin: auto;">
+    <h1>Type2Phone: Web</h1>
+    <div id="qrcode"></div>
+    
+    <textarea placeholder="type here">
+    </textarea>
+    <button>send</button>
+</div>
+     
+  
 </template>
