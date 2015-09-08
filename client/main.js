@@ -17,7 +17,13 @@ Template.mobile.onRendered(function() {
         query.observe({
             changed: function(newDoc, oldDoc) {
                 console.log("change", newDoc, newDoc.text);
-                cordova.plugins.clipboard.copy(newDoc.text);
+                if (newDoc.cmd == "clipboad") {
+                    cordova.plugins.clipboard.copy(newDoc.text);
+                } else if (newDoc.cmd == "maps") {
+                    cordova.InAppBrowser.open("geo:0,0?q=" + newDoc.text, '_system', 'location=yes');
+                } else if (newDoc.cmd == "url") {
+                    cordova.InAppBrowser.open(newDoc.text, '_system', 'location=yes');
+                }
             }
         });
     }
@@ -61,7 +67,10 @@ Template.web.onRendered(function() {
 Template.web.events({
     'click button': function(event, template) {
         var val = template.$('textarea').val();
-        console.log(val);
-        Clipboard.update(Session.get('id'), {text: val});
+        console.log(event.target.dataset.cmd, val);
+        Clipboard.update(Session.get('id'), {
+            text: val,
+            cmd: event.target.dataset.cmd
+        });
     }
 });
