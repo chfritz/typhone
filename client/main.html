@@ -46,12 +46,26 @@
     <h1>Type2Phone: Web</h1>
     <div id="qrcode"></div>
     
-    <textarea placeholder="type here">
-    </textarea>
-    <button data-cmd="clipboard">send to clipboard</button>
-    <button data-cmd="maps">open in maps</button>
-    <button data-cmd="url">open in web browser</button>
-</div>
+    <div class="ui huge fluid left icon input">
+      <input data-cmd="clipboard" type="text" placeholder="text to copy to clipboard">
+      <i class="ion-clipboard icon"></i>
+    </div>
+
+    <div class="ui divider"></div>
+    
+    <div class="ui huge fluid left icon input">
+      <input data-cmd="web" type="text" placeholder="google.com" value="http://">
+      <i class="ion-android-globe icon"></i>
+    </div>
+
+    <div class="ui divider"></div>
+
+    <div class="ui huge fluid left icon input">
+      <input data-cmd="maps" type="text" placeholder="cologne cathedral">
+      <i class="ion-map icon"></i>
+    </div>
+
+  </div>
      
   
 </template>

@@ -54,8 +54,8 @@ Template.web.onRendered(function() {
         $('#qrcode').qrcode( { 
             text: id,
             render: 'canvas',
-            width: 64,
-            height: 64, 
+            width: 32,
+            height: 32, 
             ecLevel: 'H',
             fill: "#000",
             background: "#ffffff",
@@ -65,12 +65,13 @@ Template.web.onRendered(function() {
 });
 
 Template.web.events({
-    'click button': function(event, template) {
-        var val = template.$('textarea').val();
-        console.log(event.target.dataset.cmd, val);
-        Clipboard.update(Session.get('id'), {
-            text: val,
-            cmd: event.target.dataset.cmd
-        });
+    'keydown input': function(event, template) {
+        if (event.keyCode == 13) {
+            var val = template.$(event.target).val();
+            Clipboard.update(Session.get('id'), {
+                text: val,
+                cmd: event.target.dataset.cmd
+            });
+        }
     }
 });

@@ -12,3 +12,5 @@ fourseven:scss@2.0.0
 meteoric:ionic-sass
 meteoric:ionicons-sass
 dschulz:jquery-qrcode
+semantic:ui
+flemay:less-autoprefixer
