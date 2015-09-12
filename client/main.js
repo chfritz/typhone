@@ -16,13 +16,34 @@ Template.mobile.onRendered(function() {
         var query = Clipboard.find();
         query.observe({
             changed: function(newDoc, oldDoc) {
-                console.log("change", newDoc, newDoc.text);
-                if (newDoc.cmd == "clipboad") {
-                    cordova.plugins.clipboard.copy(newDoc.text);
-                } else if (newDoc.cmd == "maps") {
-                    cordova.InAppBrowser.open("geo:0,0?q=" + newDoc.text, '_system', 'location=yes');
-                } else if (newDoc.cmd == "url") {
-                    cordova.InAppBrowser.open(newDoc.text, '_system', 'location=yes');
+                console.log("change: " + JSON.stringify(newDoc));
+
+                if (newDoc.connections.length < 2) {
+                    // TODO: add a flash message or something?
+                    Router.go('/');
+                } else {
+                
+                    if (newDoc.cmd == "clipboard") {
+                        cordova.plugins.clipboard.copy(newDoc.text);
+
+                    } else if (newDoc.cmd == "maps") {
+                        cordova.InAppBrowser.open("geo:0,0?q=" + newDoc.text,
+                                                  '_system', 'location=yes');
+
+                    } else if (newDoc.cmd == "url") {
+                        cordova.InAppBrowser.open(newDoc.text,
+                                                  '_system', 'location=yes');
+
+                    } else if (newDoc.cmd == "sms") {
+                        console.log("sending sms");
+                        cordova.sms.send(newDoc.number, newDoc.message, {},
+                                         function() {
+                                             console.log("sms sent");
+                                         },
+                                         function(e) {
+                                             console.log("sms not sent: " + e);
+                                         });
+                    }
                 }
             }
         });
@@ -47,6 +68,16 @@ Template.mobile.events({
     }
 });
 
+// Template.mobile.helpers({
+//     peers: function() {
+//         var data = Clipboard.findOne();
+//         if (data) {
+//             return data.connections.length;
+//         }
+//     }
+// });
+
+// ---------------------------------------------------------
 
 Template.web.onRendered(function() {
     Clipboard.insert({ text: "type here" }, function(err, id) {
@@ -54,23 +85,39 @@ Template.web.onRendered(function() {
         $('#qrcode').qrcode( { 
             text: id,
             render: 'canvas',
-            width: 32,
-            height: 32, 
+            size: 60,
             ecLevel: 'H',
             fill: "#000",
-            background: "#ffffff",
+            // background: "#ffffff",
             radius: 0.0,
         });
+
+        Meteor.subscribe('clipboard', id);
     });
+
+    // $("body").addClass("web");
 });
 
 Template.web.events({
     'keydown input': function(event, template) {
         if (event.keyCode == 13) {
             var val = template.$(event.target).val();
-            Clipboard.update(Session.get('id'), {
+            Clipboard.update(Session.get('id'), {$set: {
                 text: val,
                 cmd: event.target.dataset.cmd
+            }});
+            return false;
+        }
+    }
+});
+
+Template.web.helpers({
+    connections: function() {
+        var data = Clipboard.findOne();
+        if (data) {
+            return _.map(data.connections, function(conn) {
+                return conn.clientAddress + ": "
+                    + conn.httpHeaders["user-agent"];
             });
         }
     }

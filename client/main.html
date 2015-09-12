@@ -33,6 +33,7 @@
     {{text}}
   </label>
   {{else}}
+  Scan QR code to connect:
   <button class="button button-large icon ion-camera qr"></button>
   {{/if}}
   
@@ -42,29 +43,75 @@
 
 
 <template name="web">
-  <div style="width: 80%; margin: auto;">
-    <h1>Type2Phone: Web</h1>
-    <div id="qrcode"></div>
-    
-    <div class="ui huge fluid left icon input">
-      <input data-cmd="clipboard" type="text" placeholder="text to copy to clipboard">
-      <i class="ion-clipboard icon"></i>
+  <!-- <div style="width: 80%; margin: auto;"> -->
+  <div class="ui grid container main">
+
+    <div class="row">
+      <div class="column">
+        <div class="ui bottom attached message">
+          <h1 class="ui header">Type2Phone</h1>
+          <p>
+            Remote control your phone. Just install the app, open it,
+            scan the QR code below and start controlling your phone.
+          </p>
+          <div id="qrcode"></div>
+
+          <div class="connections">
+            <ul>
+            {{#each connections}}
+            <li>
+              {{this}}
+            </li>
+            {{/each}}
+            </ul>
+          </div>
+          
+        </div>
+      </div>
     </div>
 
-    <div class="ui divider"></div>
-    
-    <div class="ui huge fluid left icon input">
-      <input data-cmd="web" type="text" placeholder="google.com" value="http://">
-      <i class="ion-android-globe icon"></i>
+    <div class="row">
+      <div class="column">
+        <div class="ui two column doubling grid">
+          <div class="column">
+            
+            <div class="ui raised segment">
+              <a class="ui red ribbon label">Clipboard</a>
+              <span>Copy to phone clipboard</span>
+              <p></p>
+              <div class="ui huge fluid left icon input">
+                <input data-cmd="clipboard" type="text"
+                       placeholder=" text to copy to clipboard">
+                <i class="ion-clipboard icon"></i>
+              </div>
+            </div>
+
+            <div class="ui raised segment">
+              <a class="ui blue ribbon label">Maps</a>
+              <span>Open location in maps</span>
+              <p></p>
+              <div class="ui huge fluid left icon input">
+                <input data-cmd="maps" type="text" placeholder=" cologne cathedral">
+                <i class="ion-map icon"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="column">
+            <div class="ui raised segment">
+              <a class="ui green ribbon label">Web</a>
+              <span>Open URL in browser</span>
+              <p></p>
+              <div class="ui huge fluid left icon input">
+                <input data-cmd="url" type="text" value="http://">
+                <i class="ion-android-globe icon"></i>
+              </div>
+            </div>
+          </div>
+          
+        </div>
+      </div>
     </div>
-
-    <div class="ui divider"></div>
-
-    <div class="ui huge fluid left icon input">
-      <input data-cmd="maps" type="text" placeholder="cologne cathedral">
-      <i class="ion-map icon"></i>
-    </div>
-
   </div>
      
   
