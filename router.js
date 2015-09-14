@@ -2,7 +2,7 @@ Router.route('/page/:id', function () {
     // console.log("on route", this.params.id);
 
     // add the subscription handle to our waitlist
-    this.wait(Meteor.subscribe('clipboard', this.params.id));
+    this.wait(Meteor.subscribe('clipboard', this.params.id, device));
     
     // this.ready() is true if all items in the wait list are ready
     if (this.ready()) {

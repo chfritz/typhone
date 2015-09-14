@@ -3,11 +3,14 @@ Meteor.startup(function () {
 });
 
 
-Meteor.publish('clipboard', function(id) {
+Meteor.publish('clipboard', function(id, device) {
     if (id) {
         var connection = this.connection;
 
         console.log("new connection", connection);
+        if (device) {
+            connection.device = device;
+        }
         Clipboard.update(id, {
             $push: {connections: connection}
         });

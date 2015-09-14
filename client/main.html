@@ -57,11 +57,18 @@
           <div id="qrcode"></div>
 
           <div class="connections">
+            Connected to:
             <ul>
             {{#each connections}}
+            {{#if device}}
             <li>
-              {{this}}
+              <i class="icon ion-iphone"></i>
+              {{device.model}}
+              ({{device.platform}} {{device.version}}, {{ip}})
             </li>
+            {{/if}}
+            {{else}}
+            Nothing.
             {{/each}}
             </ul>
           </div>
@@ -70,45 +77,117 @@
       </div>
     </div>
 
+    <!-- ============================================= -->
+
+    
     <div class="row">
       <div class="column">
         <div class="ui two column doubling grid">
           <div class="column">
             
-            <div class="ui raised segment">
-              <a class="ui red ribbon label">Clipboard</a>
+            <div class="ui raised segment clipboard">
+              <div class="ui red ribbon label">
+                <i class="ion-clipboard icon"></i>
+                Clipboard
+              </div>
               <span>Copy to phone clipboard</span>
               <p></p>
-              <div class="ui huge fluid left icon input">
-                <input data-cmd="clipboard" type="text"
-                       placeholder=" text to copy to clipboard">
-                <i class="ion-clipboard icon"></i>
+              <div class="ui form">
+                <div class="ui fluid left icon input">
+                  <input data-cmd="clipboard" type="text"
+                         data-field="text"
+                         class="action"
+                         placeholder=" text to copy to clipboard">
+                  <i class="ion-clipboard icon"></i>
+                </div>
               </div>
             </div>
 
-            <div class="ui raised segment">
-              <a class="ui blue ribbon label">Maps</a>
-              <span>Open location in maps</span>
-              <p></p>
-              <div class="ui huge fluid left icon input">
-                <input data-cmd="maps" type="text" placeholder=" cologne cathedral">
-                <i class="ion-map icon"></i>
+            <div class="ui raised segment url">
+              <div class="ui green ribbon label">
+                <i class="ion-android-globe icon"></i>
+                Web
               </div>
-            </div>
-          </div>
-
-          <div class="column">
-            <div class="ui raised segment">
-              <a class="ui green ribbon label">Web</a>
               <span>Open URL in browser</span>
               <p></p>
-              <div class="ui huge fluid left icon input">
-                <input data-cmd="url" type="text" value="http://">
-                <i class="ion-android-globe icon"></i>
+              <div class="ui form">
+                <div class="ui fluid left icon input">
+                  <input data-cmd="url"
+                         data-field="text"
+                         class="action"
+                         type="text" value="http://">
+                  <i class="ion-android-globe icon"></i>
+                </div>
+              </div>
+            </div>
+
+            <div class="ui raised segment maps">
+              <div class="ui blue ribbon label">
+                <i class="ion-map icon"></i>
+                Maps
+              </div>
+              <span>Open location in maps</span>
+              <p></p>
+              <div class="ui form">
+                <div class="ui fluid left icon input">
+                  <input data-cmd="maps"
+                         data-field="text"
+                         class="action"
+                         type="text" placeholder=" cologne cathedral">
+                  <i class="ion-map icon"></i>
+                </div>
               </div>
             </div>
           </div>
+
+          <!-- ........................................ -->
           
+          <div class="column">
+            <div class="ui raised segment url">
+              <div class="ui black ribbon label">
+                <i class="ion-android-call icon"></i>
+                Phone
+              </div>
+              <span>Dial a phone number</span>
+              <p></p>
+              <div class="ui form">
+                <div class="ui fluid left icon input">
+                  <input data-cmd="tel"
+                         data-field="number"
+                         class="action"
+                         placeholder="+1 555 555-5555">
+                  <i class="ion-android-call icon"></i>
+                </div>
+              </div>
+            </div>
+
+            <div class="ui raised segment sms">
+              <div class="ui yellow ribbon label">
+                <i class="ion-android-textsms icon"></i>
+                SMS
+              </div>
+              <span>Send text message</span>
+              <p></p>
+              <div class="ui form">
+                <div class="ui fluid left icon input field">
+                  <input data-field="number" type="text"
+                         placeholder="+1 555 555-5555">
+                  <i class="ion-pound icon"></i>
+                </div>
+                <div class="ui fluid left icon input field">
+                  <textarea data-cmd="sms"
+                            data-field="message"
+                            rows="2"
+                            class="action"
+                            placeholder="What's up?"></textarea>
+                  <i class="ion-android-textsms icon"></i>
+                </div>
+              </div>
+            </div>
+
+          </div>
+          
+
         </div>
       </div>
     </div>
