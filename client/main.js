@@ -99,7 +99,7 @@ Template.web.onRendered(function() {
         Meteor.subscribe('clipboard', id);
     });
 
-    // $("body").addClass("web");
+    $("body").addClass("web");
 });
 
 Template.web.events({

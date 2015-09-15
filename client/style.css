@@ -1,15 +1,23 @@
-/* CSS declarations go here */
 
-/* body.web { */
-/*     background: url("/android.jpg"); */
-/*     background-size: cover; */
-/* } */
-
+/* make the placeholders disappear on focus */
 input:focus::-webkit-input-placeholder { color:transparent !important; }
 input:focus:-moz-placeholder { color:transparent !important; } /* FF 4-18 */
 input:focus::-moz-placeholder { color:transparent !important; } /* FF 19+ */
 input:focus:-ms-input-placeholder { color:transparent !important; } /* IE 10+ */
 
+/* make space for icon, semantic-ui already does that for text inputs */
 .icon.input textarea {
     padding-left: 45px;
+}
+
+/* only on web: background 
+image credit: https://www.flickr.com/photos/pestoverde/17161382542/in/photolist-s9uz8U-oWThnV-iEhMYJ-o8Q8yk-ncLpg9-rLTuop-dcLPsE-szGLHS-tLiDXt-s9zNtR-rcCR6G-rpAwCh-wy7XXC-jWDPsh-wy7Wbm-tv8DrD-vTHqFC-wRfuK4-szPXYc-p2mmbi-oqhcEU-pQvPKZ-dcLLhz-tv7BJn-ecJDUS-jbgsR5-tuYsbQ-rVgzJ9-q7W3Ak-rN9h1Q-pQxNoL-q7W2LK-u3L2ag-wQJCKM-wQJBNr-vTS2d6-tLiBQT-aELbM5-wNq4jh-pQzc6g-vaPmd5-sQyrLo-oWkf36-q7W1YH-qsQ33D-szHf6f-sShDhr-q7Wuee-pQATqW-pQvSqZ
+*/
+body.web {
+    background: url("/imgs/17161382542_f1756e55a1_o.jpg");
+    background-size: cover;
+}
+
+.segment {
+    background: rgba(256,256,256,0.8) !important;
 }
