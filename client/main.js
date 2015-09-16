@@ -1,13 +1,17 @@
 
 
-// Template.mobile.helpers({
-//     clipboard: function() {
-//         var c = Clipboard.findOne();
-//         if (c) {
-//             return c.text;
-//         }
-//     }
-// });
+Template.mobile.helpers({
+    clipboard: function() {
+        return Clipboard.find();
+    },
+    host: function() {
+        // find the other computer in the connection list by
+        // eliminating ourselves
+        return _.find(this.connections, function(conn) {
+            return conn.clientAddress != device.clientAddress;
+        });
+    }
+});
 
 Template.mobile.onRendered(function() {
     console.log("onRendered " + JSON.stringify(device));
@@ -18,9 +22,11 @@ Template.mobile.onRendered(function() {
             changed: function(newDoc, oldDoc) {
                 console.log("change: " + JSON.stringify(newDoc));
 
-                if (newDoc.connections.length < 2) {
+                if (newDoc.connections.length < 2) { 
+                    // Router.go('/');
                     // TODO: add a flash message or something?
-                    Router.go('/');
+                    // stop this subscription
+                    Clipboard.remove(newDoc._id);
                 } else {
                 
                     if (newDoc.cmd == "clipboard") {
@@ -63,12 +69,17 @@ Template.mobile.events({
                 //             "Result: " + result.text + "\n" +
                 //             "Format: " + result.format + "\n" +
                 //             "Cancelled: " + result.cancelled);
-                Router.go("/page/"+ result.text);
+                // Router.go("/page/"+ result.text);
+                Meteor.subscribe('clipboard', result.text, device);
             }, 
             function (error) {
                 console.log("Scanning failed: " + error);
             }
         );
+    },
+    'click .remove': function() {
+        console.log("remove " + JSON.stringify(this));
+        Clipboard.remove(this._id);        
     }
 });
 

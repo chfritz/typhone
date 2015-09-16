@@ -1,5 +1,5 @@
 <head>
-  <title>Type2Phone</title>
+  <title>TyPhone</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 </head>
 
@@ -16,26 +16,51 @@
   {{/ionBody}}
 </template>
 
+<!-- {{#contentFor "headerButtonLeft"}} -->
+<!-- {{>ionNavBackButton}} -->
+<!-- {{/contentFor}} -->
+
 <template name="mobile">
-  {{#contentFor "headerButtonLeft"}}
-  {{>ionNavBackButton}}
-  {{/contentFor}}
   
   {{#contentFor "headerTitle"}}
-  <h1 class="title">Type2Phone</h1>
+  <h1 class="title">TyPhone</h1>
   {{/contentFor}}
   
   {{#ionView}}
   {{#ionContent}}
 
-  {{#if text}}
-  <label class="item item-input">
-    {{text}}
-  </label>
-  {{else}}
-  Scan QR code to connect:
-  <button class="button button-large icon ion-camera qr"></button>
-  {{/if}}
+  {{#each clipboard}}
+  <div class="card">
+    <div class="item item-text-wrap">
+      <div class="row">
+        <div class="col col-75">
+          {{#with host}}
+          <h2>{{hostname}} ({{clientAddress}}):</h2>
+          {{/with}}
+          <p>{{text}}</p>
+        </div>
+        <div class="col">
+          <a class="button button-icon button-large icon ion-android-close remove">
+          </a>
+        </div>
+      </div>
+    </div>
+  </div> 
+  {{/each}}
+
+  <div class="card">
+    <div class="item item-text-wrap">
+      <div class="row">
+        <div class="col col-75">
+          Scan QR code to add a connection:
+        </div>
+        <div class="col">
+          <button class="button positive button-large icon ion-camera qr">
+          </button>
+        </div>
+      </div>
+    </div>
+  </div> 
   
   {{/ionContent}}
   {{/ionView}}
@@ -48,7 +73,7 @@
     <div class="row">
       <div class="column">
         <div class="ui bottom attached message">
-          <h1 class="ui header">Type2Phone</h1>
+          <h1 class="ui header">TyPhone</h1>
           <p>
             Remote control your phone. Just install the app, open it,
             scan the QR code below and start controlling your phone.
