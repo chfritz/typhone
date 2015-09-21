@@ -16,6 +16,14 @@ Template.mobile.helpers({
 Template.mobile.onRendered(function() {
     console.log("onRendered " + JSON.stringify(device));
     if (Meteor.isCordova) {
+        if (cordova.InAppBrowser) {
+            window.open = cordova.InAppBrowser.open;
+        }
+        console.log("this: " + JSON.stringify(_.keys(this)));
+        console.log("Oauth: " + JSON.stringify(_.keys(Oauth)));
+        console.log("cordova: " + JSON.stringify(_.keys(cordova)));
+        console.log("plugins: " + JSON.stringify(_.keys(cordova.plugins)));
+        console.log("navigator: " + JSON.stringify(navigator));
         console.log("querying");
         var query = Clipboard.find();
         query.observe({
@@ -33,16 +41,15 @@ Template.mobile.onRendered(function() {
                         cordova.plugins.clipboard.copy(newDoc.text);
 
                     } else if (newDoc.cmd == "maps") {
-                        cordova.InAppBrowser.open("geo:0,0?q=" + newDoc.text,
-                                                  '_system', 'location=yes');
+                        window.open("geo:0,0?q=" + newDoc.text,
+                                    '_system', 'location=yes');
 
                     } else if (newDoc.cmd == "url") {
-                        cordova.InAppBrowser.open(newDoc.text,
-                                                  '_system', 'location=yes');
+                        window.open(newDoc.text, '_system');
 
                     } else if (newDoc.cmd == "tel") {
-                        cordova.InAppBrowser.open("tel:" + newDoc.number,
-                                                  '_system', 'location=yes');
+                        window.open("tel:" + newDoc.number,
+                                    '_system', 'location=yes');
 
                     } else if (newDoc.cmd == "sms") {
                         console.log("sending sms");

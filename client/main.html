@@ -59,6 +59,8 @@
           </button>
         </div>
       </div>
+      OR:
+      {{> loginButtons}}
     </div>
   </div> 
   
@@ -78,25 +80,33 @@
             Remote control your phone. Just install the app, open it,
             scan the QR code below and start controlling your phone.
           </p>
-          <div id="qrcode"></div>
+          <div class="ui grid">
+            <div class="four wide column">
+              <div id="qrcode"></div>
+            </div>
+              
+            <div class="eight wide column connections">
+              Connected to:
+              <ul>
+                {{#each connections}}
+                {{#if device}}
+                <li>
+                  <i class="icon ion-iphone"></i>
+                  {{device.model}}
+                  ({{device.platform}} {{device.version}}, {{ip}})
+                </li>
+                {{/if}}
+                {{else}}
+                Nothing.
+                {{/each}}
+              </ul>
+            </div>
 
-          <div class="connections">
-            Connected to:
-            <ul>
-            {{#each connections}}
-            {{#if device}}
-            <li>
-              <i class="icon ion-iphone"></i>
-              {{device.model}}
-              ({{device.platform}} {{device.version}}, {{ip}})
-            </li>
-            {{/if}}
-            {{else}}
-            Nothing.
-            {{/each}}
-            </ul>
-          </div>
-          
+            <div class="four wide column">
+              {{> loginButtons}}
+            </div>
+            
+          </div>          
         </div>
       </div>
     </div>
