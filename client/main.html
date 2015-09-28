@@ -59,8 +59,8 @@
           </button>
         </div>
       </div>
-      OR:
-      {{> loginButtons}}
+      <!-- OR: -->
+      <!-- {{> loginButtons}} -->
     </div>
   </div> 
   
@@ -78,13 +78,18 @@
           <h1 class="ui header">TyPhone</h1>
           <p>
             Remote control your phone. Just install the app, open it,
-            scan the QR code below and start controlling your phone.
+            scan the QR code on this page, or login here and in the
+            app.
           </p>
           <div class="ui grid">
             <div class="four wide column">
               <div id="qrcode"></div>
             </div>
-              
+
+            <div class="four wide column">
+              <!-- {{> loginButtons}} -->
+            </div>
+
             <div class="eight wide column connections">
               Connected to:
               <ul>
@@ -102,9 +107,6 @@
               </ul>
             </div>
 
-            <div class="four wide column">
-              {{> loginButtons}}
-            </div>
             
           </div>          
         </div>

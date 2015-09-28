@@ -1,5 +1,11 @@
 Meteor.startup(function () {
     // code to run on server at startup
+
+    Accounts.onLogin(function() {
+        // create collection if it doesn't yet exist
+        console.log("creating new collection for user", Meteor.userId());
+        Clipboard.upsert({_id: Meteor.userId()}, {});
+    });
 });
 
 

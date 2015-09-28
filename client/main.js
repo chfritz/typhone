@@ -1,4 +1,5 @@
 
+// ---------------------------------------------------------
 
 Template.mobile.helpers({
     clipboard: function() {
@@ -13,9 +14,19 @@ Template.mobile.helpers({
     }
 });
 
+var sessions = [];
+
 Template.mobile.onRendered(function() {
     console.log("onRendered " + JSON.stringify(device));
     if (Meteor.isCordova) {
+        if (Meteor.userId()) {
+            subscribeUser();
+        } else {
+            Accounts.onLogin(function() {
+                subscribeUser();
+            });
+        }
+
         if (cordova.InAppBrowser) {
             window.open = cordova.InAppBrowser.open;
         }
@@ -101,9 +112,19 @@ Template.mobile.events({
 
 // ---------------------------------------------------------
 
+function subscribeUser() {
+    var id = Meteor.userId();
+    console.log("subscribing to user collection", id);
+    sessions.push(id);
+    Meteor.subscribe('clipboard', id);
+}
+
 Template.web.onRendered(function() {
+    // TODO: this creates too many collection (on per page load;
+    // change that to once per established connection between
+    // web+mobile)
     Clipboard.insert({ text: "type here" }, function(err, id) {
-        Session.set('id', id);
+        sessions.push(id);
         $('#qrcode').qrcode( { 
             text: id,
             render: 'canvas',
@@ -111,10 +132,17 @@ Template.web.onRendered(function() {
             ecLevel: 'H',
             fill: "#000",
             // background: "#ffffff",
-            radius: 0.0,
-        });
-
+            radius: 2.0,
+        });      
         Meteor.subscribe('clipboard', id);
+
+        if (Meteor.userId()) {
+            subscribeUser();
+        } else {
+            Accounts.onLogin(function() {
+                subscribeUser();
+            });
+        }
     });
 
     $("body").addClass("web");
@@ -139,7 +167,9 @@ Template.web.events({
                 data[this.dataset.field] = $(this).val();
             });
             console.log(data);
-            Clipboard.update(Session.get('id'), {$set: data});
+            _.each(sessions, function(id) {
+                Clipboard.update(id, {$set: data});
+            });
             return false;
         }
     }
