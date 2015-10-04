@@ -75,40 +75,48 @@
     <div class="row">
       <div class="column">
         <div class="ui bottom attached message">
-          <h1 class="ui header">TyPhone</h1>
-          <p>
-            Remote control your phone. Just install the app, open it,
-            scan the QR code on this page, or login here and in the
-            app.
-          </p>
           <div class="ui grid">
-            <div class="four wide column">
-              <div id="qrcode"></div>
+            <div class="two wide column">
+              <img src="imgs/logo_hires_trans.png"
+                   style="width: 100%"/>
             </div>
+            <div class="fourteen wide column">
+              <h1 class="ui header">TyPhone</h1>
+              <p>
+                Remote control your phone. Just install the app, open it,
+                scan the QR code on this page, or login here and in the
+                app.
+              </p>
 
-            <div class="four wide column">
-              <!-- {{> loginButtons}} -->
+              <div class="ui grid">
+                <div class="four wide column">
+                  <div id="qrcode"></div>
+                </div>
+
+                <div class="four wide column">
+                  <!-- {{> loginButtons}} -->
+                </div>
+
+                <div class="eight wide column connections">
+                  Connected to:
+                  <ul>
+                    {{#each connections}}
+                    {{#if device}}
+                    <li>
+                      <i class="icon ion-iphone"></i>
+                      {{device.model}}
+                      ({{device.platform}} {{device.version}}, {{ip}})
+                    </li>
+                    {{/if}}
+                    {{else}}
+                    Nothing.
+                    {{/each}}
+                  </ul>
+                </div>
+              </div>
+              
             </div>
-
-            <div class="eight wide column connections">
-              Connected to:
-              <ul>
-                {{#each connections}}
-                {{#if device}}
-                <li>
-                  <i class="icon ion-iphone"></i>
-                  {{device.model}}
-                  ({{device.platform}} {{device.version}}, {{ip}})
-                </li>
-                {{/if}}
-                {{else}}
-                Nothing.
-                {{/each}}
-              </ul>
-            </div>
-
-            
-          </div>          
+          </div>
         </div>
       </div>
     </div>
