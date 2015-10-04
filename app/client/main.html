@@ -1,0 +1,241 @@
+<head>
+  <title>TyPhone</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+</head>
+
+<body>
+</body>
+
+
+<template name="layout">
+  {{#ionBody}}
+    {{> ionNavBar class="bar-positive"}}
+    {{#ionNavView}}
+      {{> yield}}
+    {{/ionNavView}}
+  {{/ionBody}}
+</template>
+
+<!-- {{#contentFor "headerButtonLeft"}} -->
+<!-- {{>ionNavBackButton}} -->
+<!-- {{/contentFor}} -->
+
+<template name="mobile">
+  
+  {{#contentFor "headerTitle"}}
+  <h1 class="title">TyPhone</h1>
+  {{/contentFor}}
+  
+  {{#ionView}}
+  {{#ionContent}}
+
+  {{#each clipboard}}
+  <div class="card">
+    <div class="item item-text-wrap">
+      <div class="row">
+        <div class="col col-75">
+          {{#with host}}
+          <h2>{{hostname}} ({{clientAddress}}):</h2>
+          {{/with}}
+          <p>{{text}}</p>
+        </div>
+        <div class="col">
+          <a class="button button-icon button-large icon ion-android-close remove">
+          </a>
+        </div>
+      </div>
+    </div>
+  </div> 
+  {{/each}}
+
+  <div class="card">
+    <div class="item item-text-wrap">
+      <div class="row">
+        <div class="col col-75">
+          Scan QR code to add a connection:
+        </div>
+        <div class="col">
+          <button class="button positive button-large icon ion-camera qr">
+          </button>
+        </div>
+      </div>
+      <!-- OR: -->
+      <!-- {{> loginButtons}} -->
+    </div>
+  </div> 
+  
+  {{/ionContent}}
+  {{/ionView}}
+</template>
+
+
+<template name="web">
+  <div class="ui grid container main">
+
+    <div class="row">
+      <div class="column">
+        <div class="ui bottom attached message">
+          <div class="ui grid">
+            <div class="two wide column">
+              <img src="imgs/logo_hires_trans.png"
+                   style="width: 100%"/>
+            </div>
+            <div class="fourteen wide column">
+              <h1 class="ui header">TyPhone</h1>
+              <p>
+                Remote control your phone. Just install the app, open it,
+                scan the QR code on this page, or login here and in the
+                app.
+              </p>
+
+              <div class="ui grid">
+                <div class="four wide column">
+                  <div id="qrcode"></div>
+                </div>
+
+                <div class="four wide column">
+                  <!-- {{> loginButtons}} -->
+                </div>
+
+                <div class="eight wide column connections">
+                  Connected to:
+                  <ul>
+                    {{#each connections}}
+                    {{#if device}}
+                    <li>
+                      <i class="icon ion-iphone"></i>
+                      {{device.model}}
+                      ({{device.platform}} {{device.version}}, {{ip}})
+                    </li>
+                    {{/if}}
+                    {{else}}
+                    Nothing.
+                    {{/each}}
+                  </ul>
+                </div>
+              </div>
+              
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================= -->
+
+    
+    <div class="row">
+      <div class="column">
+        <div class="ui two column doubling grid">
+          <div class="column">
+            
+            <div class="ui raised segment clipboard">
+              <div class="ui red ribbon label">
+                <i class="ion-clipboard icon"></i>
+                Clipboard
+              </div>
+              <span>Copy to phone clipboard</span>
+              <p></p>
+              <div class="ui form">
+                <div class="ui fluid left icon input">
+                  <input data-cmd="clipboard" type="text"
+                         data-field="text"
+                         class="action"
+                         placeholder=" text to copy to clipboard">
+                  <i class="ion-clipboard icon"></i>
+                </div>
+              </div>
+            </div>
+
+            <div class="ui raised segment url">
+              <div class="ui green ribbon label">
+                <i class="ion-android-globe icon"></i>
+                Web
+              </div>
+              <span>Open URL in browser</span>
+              <p></p>
+              <div class="ui form">
+                <div class="ui fluid left icon input">
+                  <input data-cmd="url"
+                         data-field="text"
+                         class="action"
+                         type="text" value="http://">
+                  <i class="ion-android-globe icon"></i>
+                </div>
+              </div>
+            </div>
+
+            <div class="ui raised segment maps">
+              <div class="ui blue ribbon label">
+                <i class="ion-map icon"></i>
+                Maps
+              </div>
+              <span>Open location in maps</span>
+              <p></p>
+              <div class="ui form">
+                <div class="ui fluid left icon input">
+                  <input data-cmd="maps"
+                         data-field="text"
+                         class="action"
+                         type="text" placeholder=" cologne cathedral">
+                  <i class="ion-map icon"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ........................................ -->
+          
+          <div class="column">
+            <div class="ui raised segment url">
+              <div class="ui black ribbon label">
+                <i class="ion-android-call icon"></i>
+                Phone
+              </div>
+              <span>Dial a phone number</span>
+              <p></p>
+              <div class="ui form">
+                <div class="ui fluid left icon input">
+                  <input data-cmd="tel"
+                         data-field="number"
+                         class="action"
+                         placeholder="+1 555 555-5555">
+                  <i class="ion-android-call icon"></i>
+                </div>
+              </div>
+            </div>
+
+            <div class="ui raised segment sms">
+              <div class="ui yellow ribbon label">
+                <i class="ion-android-textsms icon"></i>
+                SMS
+              </div>
+              <span>Send text message</span>
+              <p></p>
+              <div class="ui form">
+                <div class="ui fluid left icon input field">
+                  <input data-field="number" type="text"
+                         placeholder="+1 555 555-5555">
+                  <i class="ion-pound icon"></i>
+                </div>
+                <div class="ui fluid left icon input field">
+                  <textarea data-cmd="sms"
+                            data-field="message"
+                            rows="2"
+                            class="action"
+                            placeholder="What's up?"></textarea>
+                  <i class="ion-android-textsms icon"></i>
+                </div>
+              </div>
+            </div>
+
+          </div>
+          
+
+        </div>
+      </div>
+    </div>
+  </div>
+     
+  
+</template>

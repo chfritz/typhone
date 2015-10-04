@@ -1,6 +1,8 @@
 
-DIR=../typhone_build/
+DIR=$PWD/build/
+mkdir -p $DIR
 
+cd app
 meteor build $DIR --server=http://typhone.xyz
 # keytool -genkey -alias typhone -keyalg RSA -keysize 2048 -validity 10000
 cd $DIR/android/
