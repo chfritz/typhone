@@ -1,6 +1,7 @@
 
 DIR=$PWD/build/
 mkdir -p $DIR
+echo $DIR
 
 cd app
 meteor build $DIR --server=http://typhone.xyz

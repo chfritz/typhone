@@ -1,7 +1,7 @@
 App.info({
   name: 'TyPhone',
   description: 'An app that allows you to use your computer to control your phone (clipboard, sms, maps, browser, dial phone numbers, etc.).',
-  version: '0.0.1'
+  version: '0.0.2'
 });
 
 App.icons({

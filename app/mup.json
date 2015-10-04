@@ -30,7 +30,7 @@
   "appName": "typhone",
 
   // Location of app (local directory)
-  "app": "~/work/typhone",
+  "app": "~/work/typhone/app",
 
   // Configure environment
   "env": {
