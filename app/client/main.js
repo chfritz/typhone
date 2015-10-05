@@ -75,15 +75,15 @@ Template.mobile.onRendered(function() {
                     if (newDoc.callerCandidate) {
                         // TODO: only if new
                         console.log("adding ice candidate: " + newDoc.callerCandidate);
-                        pc.addIceCandidate(new RTCIceCandidate(JSON.parse(newDoc.callerCandidate)));
+                        pc.addIceCandidate(new RTCIceCandidate(newDoc.callerCandidate));
                     }
 
                     if (newDoc.offer && !offer) {
                         console.log("got offer:" + newDoc.offer);
                         offer = newDoc.offer;
-                        console.log(JSON.parse(newDoc.offer));
+                        console.log(newDoc.offer);
                         console.log(pc.setRemoteDescription);
-                        var rsd = new sessionDescription(JSON.parse(newDoc.offer));
+                        var rsd = new sessionDescription(newDoc.offer);
                         console.log(rsd);
                         pc.setRemoteDescription(rsd, function() {
                             console.log("set remote description");
@@ -93,7 +93,7 @@ Template.mobile.onRendered(function() {
                                 pc.setLocalDescription(description, function() {
                                     console.log("set local description");
                                     var data = {
-                                        answer: JSON.stringify(description),
+                                        answer: description.toJSON(),
                                     };
                                     console.log(sessions);                                   
                                     _.each(sessions, function(id) {
@@ -232,7 +232,7 @@ Template.web.helpers({
             if (answer == null
                 && data.answer) {
                 pc.setRemoteDescription(
-                    new sessionDescription(JSON.parse(data.answer)),
+                    new sessionDescription(data.answer),
                     function() {
                         console.log("RTC: we are ready!");
                     }, function(err) {
@@ -241,7 +241,7 @@ Template.web.helpers({
             }
             if (data.responderCandidate) {
                 // TODO: only if new
-                pc.addIceCandidate(new RTCIceCandidate(JSON.parse(data.responderCandidate)));
+                pc.addIceCandidate(new RTCIceCandidate(data.responderCandidate));
             }
             return _.map(data.connections, function(conn) {
                 return { ip: conn.clientAddress,
@@ -286,9 +286,9 @@ startRTC = function(isCaller) {
             // signalingChannel.send(JSON.stringify({ "candidate": evt.candidate }));
             var data = {};
             if (isCaller) {
-                data.callerCandidate = JSON.stringify(evt.candidate);
+                data.callerCandidate = evt.candidate.toJSON();
             } else {
-                data.responderCandidate = JSON.stringify(evt.candidate);
+                data.responderCandidate = evt.candidate.toJSON();
             };
             console.log("setting callerCandidate", data);           
             _.each(sessions, function(id) {
@@ -338,11 +338,11 @@ startRTC = function(isCaller) {
 makeOffer = function() {
     pc.createOffer(function(description) {
         offer = description;
-        console.log("createOffer", description, JSON.stringify(description));
+        console.log("createOffer", description, description);
         pc.setLocalDescription(description, function() {
             // pc2.setRemoteDescription(offer, onPc2RemoteDescriptionSet, onError);
             var data = {
-                offer: JSON.stringify(description),
+                offer: description.toJSON(),
             };
             _.each(sessions, function(id) {
                 Clipboard.update(id, {$set: data});
