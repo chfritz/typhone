@@ -1,4 +1,5 @@
 
+
 // ---------------------------------------------------------
 
 Template.mobile.helpers({
@@ -35,6 +36,31 @@ Template.mobile.onRendered(function() {
         console.log("cordova: " + JSON.stringify(_.keys(cordova)));
         console.log("plugins: " + JSON.stringify(_.keys(cordova.plugins)));
         console.log("navigator: " + JSON.stringify(navigator));
+        
+        window.resolveLocalFileSystemURI("file:///sdcard/", function(dirEntry) {
+            console.log(dirEntry.name);
+
+            function success(entries) {
+                var i;
+                for (i=0; i<entries.length; i++) {
+                    console.log(entries[i].name);
+                }
+            }
+
+            function fail(error) {
+                alert("Failed to list directory contents: " + error.code);
+            }
+
+            // Get a directory reader
+            var directoryReader = dirEntry.createReader();
+
+            // Get a list of all the entries in the directory
+            directoryReader.readEntries(success,fail);
+        }, function(err) {
+            console.log("error" + err);
+        });
+
+
         console.log("querying");
         var query = Clipboard.find();
         query.observe({
@@ -72,49 +98,10 @@ Template.mobile.onRendered(function() {
                                      console.log("sms not sent: " + e);
                                  });
                     }
-                    if (newDoc.callerCandidate) {
-                        // TODO: only if new
-                        console.log("adding ice candidate: " + newDoc.callerCandidate);
-                        pc.addIceCandidate(new RTCIceCandidate(newDoc.callerCandidate));
-                    }
-
-                    if (newDoc.offer && !offer) {
-                        console.log("got offer:" + newDoc.offer);
-                        offer = newDoc.offer;
-                        console.log(newDoc.offer);
-                        console.log(pc.setRemoteDescription);
-                        var rsd = new sessionDescription(newDoc.offer);
-                        console.log(rsd);
-                        pc.setRemoteDescription(rsd, function() {
-                            console.log("set remote description");
-                            pc.createAnswer(function(description) {
-                                console.log("answer: " + JSON.stringify(description));
-                                answer = description;
-                                pc.setLocalDescription(description, function() {
-                                    console.log("set local description");
-                                    var data = {
-                                        answer: description.toJSON(),
-                                    };
-                                    console.log(sessions);                                   
-                                    _.each(sessions, function(id) {
-                                        console.log(id);                                   
-                                        Clipboard.update(id, {$set: data});
-                                    });
-                                }, function() {
-                                    console.log("couldn't set local description");
-                                });
-                            }, function() {
-                                console.log("couldn't create answer");
-                            });
-                        }, function(err) {
-                            console.log("couldn't set remote description");
-                        });
-                    }
                 }
             }
         });
         
-        startRTC(false);
     }
 });
 
@@ -130,6 +117,7 @@ Template.mobile.events({
                 // Router.go("/page/"+ result.text);
                 sessions.push(result.text);
                 Meteor.subscribe('clipboard', result.text, device);
+                startRTC(false, result.text);
             }, 
             function (error) {
                 console.log("Scanning failed: " + error);
@@ -176,6 +164,8 @@ Template.web.onRendered(function() {
             radius: 2.0,
         });      
         Meteor.subscribe('clipboard', id);
+        Signaling.insert({channel: id})
+        startRTC(true, id);
 
         if (Meteor.userId()) {
             subscribeUser();
@@ -185,8 +175,6 @@ Template.web.onRendered(function() {
             });
         }
     });
-
-    startRTC(true);
     
     $("body").addClass("web");
 });
@@ -224,25 +212,6 @@ Template.web.helpers({
         var data = Clipboard.findOne();
         console.log("data", data);
         if (data) {
-            if (offer == null
-                && data.connections
-                && data.connections.length > 1) {
-                makeOffer();
-            }
-            if (answer == null
-                && data.answer) {
-                pc.setRemoteDescription(
-                    new sessionDescription(data.answer),
-                    function() {
-                        console.log("RTC: we are ready!");
-                    }, function(err) {
-                        console.log("couldn't set remote description");
-                    });
-            }
-            if (data.responderCandidate) {
-                // TODO: only if new
-                pc.addIceCandidate(new RTCIceCandidate(data.responderCandidate));
-            }
             return _.map(data.connections, function(conn) {
                 return { ip: conn.clientAddress,
                          agent: conn.httpHeaders["user-agent"],
@@ -254,103 +223,3 @@ Template.web.helpers({
 
 // ---------------------------------------------------------
 
-var peerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || 
-    window.webkitRTCPeerConnection || window.msRTCPeerConnection;
-var sessionDescription = window.RTCSessionDescription ||
-    window.mozRTCSessionDescription ||
-    window.webkitRTCSessionDescription || window.msRTCSessionDescription;
-navigator.getUserMedia = navigator.getUserMedia || navigator.mozGetUserMedia ||
-    navigator.webkitGetUserMedia || navigator.msGetUserMedia;
-
-sendChannel = null;
-pc = null;
-var configuration = {};
-offer = null;
-answer = null;
-
-// run start(true) to initiate a call
-startRTC = function(isCaller) {
-    console.log("starting RTC");
-    pc = new peerConnection(
-        // configuration,
-        {"iceServers": [{"url": "stun:stun.l.google.com:19302"}]},
-        // {optional: [{RtpDataChannels: true}]}
-        null
-    );
-    console.log(pc);
-    
-    // send any ice candidates to the other peer
-    pc.onicecandidate = function (evt) {
-        if (evt.candidate) {
-            console.log("onICECandidate", evt);
-            // signalingChannel.send(JSON.stringify({ "candidate": evt.candidate }));
-            var data = {};
-            if (isCaller) {
-                data.callerCandidate = evt.candidate.toJSON();
-            } else {
-                data.responderCandidate = evt.candidate.toJSON();
-            };
-            console.log("setting callerCandidate", data);           
-            _.each(sessions, function(id) {
-                Clipboard.update(id, {$set: data});
-            });
-        }
-    };
-
-    // once remote stream arrives, show it in the remote video element
-    // pc.onaddstream = function (evt) {
-    //     remoteView.src = URL.createObjectURL(evt.stream);
-    // };
-
-    // get the local stream, show it in the local video element and send it
-    // navigator.getUserMedia({ "audio": true, "video": true }, function (stream) {
-    //     selfView.src = URL.createObjectURL(stream);
-    //     pc.addStream(stream);
-
-    //     if (isCaller)
-    //         pc.createOffer(gotDescription);
-    //     else
-    //         pc.createAnswer(pc.remoteDescription, gotDescription);
-
-    //     function gotDescription(desc) {
-    //         pc.setLocalDescription(desc);
-    //         signalingChannel.send(JSON.stringify({ "sdp": desc }));
-    //     }
-    // });
-
-    pc.ondatachannel = function(event) {
-        console.log("got data channel");
-        receiveChannel = event.channel;
-        receiveChannel.onmessage = function(event){
-            console.log(event, event.data);
-        };
-    };
-    
-    sendChannel = pc.createDataChannel("sendDataChannel", {reliable: false});
-    // sendChannel.binaryType = 'arraybuffer';
-    
-    // document.querySelector("button#send").onclick = function (){
-    //     var data = document.querySelector("textarea#send").value;
-    //     sendChannel.send(data);
-    // };
-}
-
-makeOffer = function() {
-    pc.createOffer(function(description) {
-        offer = description;
-        console.log("createOffer", description, description);
-        pc.setLocalDescription(description, function() {
-            // pc2.setRemoteDescription(offer, onPc2RemoteDescriptionSet, onError);
-            var data = {
-                offer: description.toJSON(),
-            };
-            _.each(sessions, function(id) {
-                Clipboard.update(id, {$set: data});
-            });
-        }, function(err) {
-            console.log("couldn't set local description", err);
-        });
-    }, function(err) {
-        console.log(err);
-    });
-}

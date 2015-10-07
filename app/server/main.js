@@ -32,3 +32,8 @@ Meteor.publish('clipboard', function(id, device) {
     }
 });
 
+Meteor.publish('signaling', function(channel) {
+    if (channel) {
+        return Signaling.find({channel: channel});
+    }
+});
