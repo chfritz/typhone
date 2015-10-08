@@ -117,7 +117,8 @@ Template.mobile.events({
                 // Router.go("/page/"+ result.text);
                 sessions.push(result.text);
                 Meteor.subscribe('clipboard', result.text, device);
-                startRTC(false, result.text);
+                // startRTC(false, result.text);
+                new WebRTC(false, result.text);
             }, 
             function (error) {
                 console.log("Scanning failed: " + error);
@@ -165,7 +166,8 @@ Template.web.onRendered(function() {
         });      
         Meteor.subscribe('clipboard', id);
         Signaling.insert({channel: id})
-        startRTC(true, id);
+        // startRTC(true, id);
+        new WebRTC(true, id);
 
         if (Meteor.userId()) {
             subscribeUser();
