@@ -10,7 +10,7 @@ An open-source, meteor-based web service and app for controlling your smartphone
  - open URLs in your phones browser
  - dial phone numbers
 
-![Screenshot](/public/imgs/screenshot.png?raw=true "Screenshot of web interface")
+![Screenshot](/assets/screenshot.png?raw=true "Screenshot of web interface")
 
 ## License
 Apache 2
