@@ -2,16 +2,17 @@
 // run new WebRTC(true, someSecretId) to initiate a call
 WebRTC = class {
 
-    constructor(isCaller, channel, onConnection) {
+    constructor(isCaller, channel, handlers) {
         console.log("starting RTC on channel: " + channel);
-
-        var peerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || 
-            window.webkitRTCPeerConnection || window.msRTCPeerConnection;
+        handlers = handlers || {};
+        
+        var peerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection
+            || window.webkitRTCPeerConnection || window.msRTCPeerConnection;
         var sessionDescription = window.RTCSessionDescription ||
             window.mozRTCSessionDescription ||
             window.webkitRTCSessionDescription || window.msRTCSessionDescription;
-        var getUserMedia = navigator.getUserMedia || navigator.mozGetUserMedia ||
-            navigator.webkitGetUserMedia || navigator.msGetUserMedia;
+        var getUserMedia = navigator.getUserMedia || navigator.mozGetUserMedia
+            || navigator.webkitGetUserMedia || navigator.msGetUserMedia;
 
         var pc = this.pc = new peerConnection(
             // configuration,
@@ -48,12 +49,24 @@ WebRTC = class {
             console.log("got data channel");
             receiveChannel = event.channel;
             receiveChannel.onmessage = function(event){
-                console.log(event, event.data);
+                console.log("got message");
+                var handler;
+                if (event.data instanceof ArrayBuffer) {
+                    handler = "onArrayBuffer";
+                } else if (event.data instanceof Blob) {
+                    handler = "onBlob";
+                } else if (typeof event.data === "string") {
+                    handler = "onText";
+                }
+                console.log("message type: " + handler);
+                if (handler && handlers[handler]) {
+                    handlers[handler](event.data);
+                }
             };
         };
         
         this.sendChannel =
-            pc.createDataChannel("sendDataChannel", {reliable: false});
+            pc.createDataChannel("sendDataChannel", {reliable: true});
         // sendChannel.binaryType = 'arraybuffer';
         // sendChannel.send(data); // example
 
@@ -87,8 +100,8 @@ WebRTC = class {
                     new sessionDescription(data.answer),
                     function() {
                         console.log("RTC: we are ready!");
-                        if (onConnection) {
-                            onConnection(this);
+                        if (handlers.onConnection) {
+                            handlers.onConnection(this);
                         }
                     }, function(err) {
                         console.log("couldn't set remote description", err);

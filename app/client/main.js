@@ -4,6 +4,63 @@ var debug;
 
 // ---------------------------------------------------------
 
+var expectedFile;
+var buffer;
+var buffered = 0;
+function protocol(obj) {
+    console.log("protocol" + JSON.stringify(obj));
+    if (obj.cmd == "sending") {
+        expectedFile = obj.file;
+        buffer = new Uint8Array( expectedFile.size );
+        buffered = 0;
+    }
+}
+
+function receiveData(data) {
+    console.log("receiveData, " + data.byteLength);
+
+    // buffer.push(data);
+    // #HERE: the above only works when creating Blobs afterwards; use
+    // something like this instead:
+    buffer.set( new Uint8Array( data ), buffered );
+    buffered += data.byteLength;
+    
+    if (expectedFile && buffered == expectedFile.size) {
+        console.log("done receiving");
+        writeToDisk(expectedFile.name, buffer.buffer);
+        expectedFile = null;
+    }
+}
+
+function writeToDisk(name, data) {
+    function errorHandler(err) {
+        console.log(err);
+    }
+
+    navigator.webkitPersistentStorage.requestQuota(1024*1024, function(grantedBytes) {
+        window.requestFileSystem(PERSISTENT, grantedBytes, function(fs) {
+            fs.root.getFile(name, {create: true}, function(fileEntry) {
+                // Create a FileWriter object for our FileEntry (log.txt).
+                fileEntry.createWriter(function(fileWriter) {
+                    fileWriter.onwriteend = function(e) {
+                        console.log('Write completed.');
+                    };
+                    fileWriter.onerror = function(e) {
+                        console.log('Write failed: ' + e.toString());
+                    };
+                    // Create a new Blob and write it to log.txt.
+                    // var blob = new Blob(['Lorem Ipsum'], {type: 'text/plain'});
+                    // var blob = new Blob(data);
+                    fileWriter.write(data);
+                }, errorHandler);
+            }, errorHandler);
+        }, errorHandler);
+    });
+};
+
+
+// ---------------------------------------------------------
+
 Template.mobile.helpers({
     clipboard: function() {
         return Clipboard.find();
@@ -126,7 +183,15 @@ Template.mobile.events({
                 sessions.push(result.text);
                 Meteor.subscribe('clipboard', result.text, device);
                 // startRTC(false, result.text);
-                new WebRTC(false, result.text);
+                new WebRTC(false, result.text, {
+                    onText: function(text) {
+                        console.log("received text: " + text);
+                        protocol(JSON.parse(text));
+                    },
+                    onArrayBuffer: function(data) {
+                        receiveData(data);
+                    }
+                });
             }, 
             function (error) {
                 console.log("Scanning failed: " + error);
@@ -175,9 +240,11 @@ Template.web.onRendered(function() {
         sessions.push(debug);
         Meteor.subscribe('clipboard', debug);
         // startRTC(false, result.text);
-        rtc = new WebRTC(true, debug, function() {
-            Session.set('webrtc', true);
-        });           
+        rtc = new WebRTC(true, debug, {
+            onConnection: function() {
+                Session.set('webrtc', true);
+            }
+        });
     } else {
         Clipboard.insert({ text: "type here" }, function(err, id) {
             sessions.push(id);
@@ -193,9 +260,11 @@ Template.web.onRendered(function() {
             Meteor.subscribe('clipboard', id);
             Signaling.insert({channel: id})
             // startRTC(true, id);
-            rtc = new WebRTC(true, id, function() {
-                Session.set('webrtc', true);
-            });           
+            rtc = new WebRTC(true, id, {
+                onConnection: function() {
+                    Session.set('webrtc', true);
+                }
+            });
         });
     }
     
@@ -257,6 +326,12 @@ Template.dropzone.onRendered(function() {
                 if (file.size < 1000000000) {
                     console.log("upload", file);
                     if (rtc) {
+                        // send metadata:
+                        rtc.dataChannel.send(JSON.stringify({
+                            cmd: "sending",
+                            file: _.extend({}, file)
+                        }));
+                        // send data:
                         rtc.dataChannel.binaryType = 'arraybuffer';
                         var reader = new window.FileReader();
                         reader.onload = function(e) {
