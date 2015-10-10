@@ -52,8 +52,9 @@ WebRTC = class {
             };
         };
         
-        this.sendChannel = pc.createDataChannel("sendDataChannel", {reliable: false});
-        // sendChannel.binaryType = 'arraybuffer';   
+        this.sendChannel =
+            pc.createDataChannel("sendDataChannel", {reliable: false});
+        // sendChannel.binaryType = 'arraybuffer';
         // sendChannel.send(data); // example
 
         if (isCaller) {
@@ -73,7 +74,7 @@ WebRTC = class {
                 console.log("couldn't create offer", err);
             });
         }
-        
+
         
         // ---------------------------------------------------------
         // Signaling
@@ -123,8 +124,8 @@ WebRTC = class {
             // both
             if (data.candidate &&
                 // don't add our own candidates
-                ((isCaller && data.type == "caller")
-                 || (!isCaller && data.type == "receiver"))) {
+                ((!isCaller && data.type == "caller")
+                 || (isCaller && data.type == "receiver"))) {
                 pc.addIceCandidate(new RTCIceCandidate(data.candidate));
             }
         }
@@ -137,7 +138,7 @@ WebRTC = class {
     }
 
     get peerConnection() { return this.pc; }
-    get sendChannel() { return this.sendChannel; }
+    get dataChannel() { return this.sendChannel; }
     
 };
 

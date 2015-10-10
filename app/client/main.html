@@ -72,6 +72,11 @@
   {{/ionView}}
 </template>
 
+<template name="dropzone">
+  <div class="ui segment" id="upload">
+    Drop Files Here
+  </div>
+</template>
 
 <template name="web">
   <div class="ui grid container main">
@@ -99,6 +104,9 @@
 
                 <div class="four wide column">
                   <!-- {{> loginButtons}} -->
+                  {{#if webrtc}}
+                  {{> dropzone}}
+                  {{/if}}
                 </div>
 
                 <div class="eight wide column connections">

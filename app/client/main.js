@@ -1,4 +1,6 @@
 
+// var debug = "debug";
+var debug;
 
 // ---------------------------------------------------------
 
@@ -101,7 +103,13 @@ Template.mobile.onRendered(function() {
                 }
             }
         });
-        
+
+        if (debug) {
+            sessions.push(debug);
+            Meteor.subscribe('clipboard', debug, device);
+            // startRTC(false, result.text);
+            new WebRTC(false, debug);
+        }        
     }
 });
 
@@ -149,34 +157,47 @@ function subscribeUser() {
     Meteor.subscribe('clipboard', id);
 }
 
+rtc = null;
 Template.web.onRendered(function() {
     // TODO: this creates too many collection (on per page load;
     // change that to once per established connection between
     // web+mobile)
-    Clipboard.insert({ text: "type here" }, function(err, id) {
-        sessions.push(id);
-        $('#qrcode').qrcode( { 
-            text: id,
-            render: 'canvas',
-            size: 60,
-            ecLevel: 'H',
-            fill: "#000",
-            // background: "#ffffff",
-            radius: 2.0,
-        });      
-        Meteor.subscribe('clipboard', id);
-        Signaling.insert({channel: id})
-        // startRTC(true, id);
-        new WebRTC(true, id);
 
-        if (Meteor.userId()) {
+    if (Meteor.userId()) {
+        subscribeUser();
+    } else {
+        Accounts.onLogin(function() {
             subscribeUser();
-        } else {
-            Accounts.onLogin(function() {
-                subscribeUser();
-            });
-        }
-    });
+        });
+    }
+
+    if (debug) {
+        sessions.push(debug);
+        Meteor.subscribe('clipboard', debug);
+        // startRTC(false, result.text);
+        rtc = new WebRTC(true, debug, function() {
+            Session.set('webrtc', true);
+        });           
+    } else {
+        Clipboard.insert({ text: "type here" }, function(err, id) {
+            sessions.push(id);
+            $('#qrcode').qrcode( { 
+                text: id,
+                render: 'canvas',
+                size: 60,
+                ecLevel: 'H',
+                fill: "#000",
+                // background: "#ffffff",
+                radius: 2.0,
+            });      
+            Meteor.subscribe('clipboard', id);
+            Signaling.insert({channel: id})
+            // startRTC(true, id);
+            rtc = new WebRTC(true, id, function() {
+                Session.set('webrtc', true);
+            });           
+        });
+    }
     
     $("body").addClass("web");
 });
@@ -209,6 +230,7 @@ Template.web.events({
 
 });
 
+Session.set('webrtc', false);
 Template.web.helpers({
     connections: function() {
         var data = Clipboard.findOne();
@@ -220,8 +242,38 @@ Template.web.helpers({
                          device: conn.device };
             });
         }
+    },
+    webrtc: function() {
+        return Session.get('webrtc');
     }
 });
 
 // ---------------------------------------------------------
 
+Template.dropzone.onRendered(function() {
+    new dragAndDrop({
+        onComplete: function(files) {
+            _.each(files, function(file, index) {
+                if (file.size < 1000000000) {
+                    console.log("upload", file);
+                    if (rtc) {
+                        rtc.dataChannel.binaryType = 'arraybuffer';
+                        var reader = new window.FileReader();
+                        reader.onload = function(e) {
+                            console.log(e);
+                            rtc.dataChannel.send(e.target.result);
+                        }
+                        reader.readAsArrayBuffer(file);
+                    }
+                } else {
+                    alert("File " + file + " is too large (> 1000MB).");
+                }
+            });
+        },
+        style: {
+        },
+        onEnter: function() {
+            console.log("enter");
+        }
+    }).add('#upload');
+});

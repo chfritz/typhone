@@ -1,5 +1,6 @@
 Meteor.startup(function () {
     // code to run on server at startup
+    Signaling.remove({});
 
     Accounts.onLogin(function() {
         // create collection if it doesn't yet exist
@@ -34,6 +35,21 @@ Meteor.publish('clipboard', function(id, device) {
 
 Meteor.publish('signaling', function(channel) {
     if (channel) {
+        if (Signaling.findOne({channel: channel, count: {$exists: 1}})) {
+            Signaling.update({channel: channel, count: {$exists: 1}},
+                             {$inc: {count: 1}});
+        } else {
+            Signaling.insert({channel: channel, count: 1});
+        }
+
+        this.onStop(function() {
+            Signaling.update({channel: channel, count: {$exists: 1}},
+                             {$inc: {count: -1}});
+            if (Signaling.findOne({channel: channel, count: {$exists: 1}}).count == 0) {
+                Signaling.remove({channel: channel}, {multi: 1});
+            }
+        });
+
         return Signaling.find({channel: channel});
     }
 });
