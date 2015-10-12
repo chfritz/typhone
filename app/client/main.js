@@ -17,11 +17,8 @@ function protocol(obj) {
 }
 
 function receiveData(data) {
-    console.log("receiveData, " + data.byteLength);
+    // console.log("receiveData, " + data.byteLength);
 
-    // buffer.push(data);
-    // #HERE: the above only works when creating Blobs afterwards; use
-    // something like this instead:
     buffer.set( new Uint8Array( data ), buffered );
     buffered += data.byteLength;
     
@@ -37,21 +34,40 @@ function writeToDisk(name, data) {
         console.log(err);
     }
 
-    navigator.webkitPersistentStorage.requestQuota(1024*1024, function(grantedBytes) {
+    navigator.webkitPersistentStorage.requestQuota(1 << 30, function(grantedBytes) {
         window.requestFileSystem(PERSISTENT, grantedBytes, function(fs) {
+            console.log("grantedBytes: " + grantedBytes);
             fs.root.getFile(name, {create: true}, function(fileEntry) {
-                // Create a FileWriter object for our FileEntry (log.txt).
+                // Create a FileWriter object for our FileEntry.
                 fileEntry.createWriter(function(fileWriter) {
-                    fileWriter.onwriteend = function(e) {
-                        console.log('Write completed.');
+
+                    // we again, as on the sender side, need to go
+                    // about in chunks, because the FileWriter doesn't
+                    // like to write a lot all at once.
+                    var written = 0;
+                    var chunkSize = 1 << 20; // 1MB
+                    function writeNext() {
+                        fileWriter.write(
+                            data.slice(
+                                written,
+                                Math.min(data.byteLength, written + chunkSize)));
+                        written += chunkSize;
+                    }                        
+
+                    fileWriter.onwrite = function(e) {
+                        if (written < data.byteLength) {
+                            console.log('writing..');
+                            writeNext();
+                        } else {
+                            console.log('Write completed.');
+                        }
                     };
                     fileWriter.onerror = function(e) {
                         console.log('Write failed: ' + e.toString());
                     };
-                    // Create a new Blob and write it to log.txt.
-                    // var blob = new Blob(['Lorem Ipsum'], {type: 'text/plain'});
-                    // var blob = new Blob(data);
-                    fileWriter.write(data);
+
+                    writeNext();
+                    
                 }, errorHandler);
             }, errorHandler);
         }, errorHandler);
@@ -335,8 +351,45 @@ Template.dropzone.onRendered(function() {
                         rtc.dataChannel.binaryType = 'arraybuffer';
                         var reader = new window.FileReader();
                         reader.onload = function(e) {
-                            console.log(e);
-                            rtc.dataChannel.send(e.target.result);
+                            console.log("sending");
+                            // rtc.dataChannel.send(e.target.result);
+                            // #HERE: chunk file down into 16kb messages
+                            // also add a response from receiver before
+                            // proceeding                           
+                            var chunkSize = 1 << 14; // 16KB
+                            var maxBuffer = chunkSize * 10;
+                            var buffer = e.target.result;
+                            
+                            // for (var i = 0; i < file.size; i += chunkSize) {
+                            //     console.log("offset: ", i);
+                            //     rtc.dataChannel.send(
+                            //         (new Int8Array(buffer, i,
+                            //                        Math.min(chunkSize, file.size - i)))
+                            //             .buffer
+                            //     );
+                            // }
+
+                            var i = 0;
+                            function sendNextChunk() {
+                                $('#upload .progress').progress({
+                                    percent: Math.round(i * 100 / file.size)
+                                });
+                                if (rtc.dataChannel.bufferedAmount < maxBuffer) {
+                                    rtc.dataChannel.send(
+                                        // (new Uint8Array(buffer, i,
+                                        //                 Math.min(chunkSize, file.size - i)))
+                                        // .buffer
+                                        buffer.slice(i, Math.min(file.size, i + chunkSize))
+                                    );
+                                    i += chunkSize;
+                                }
+                                if (i < file.size) {
+                                    window.setTimeout(sendNextChunk, 1);
+                                }
+                            }
+                            
+                            // rtc.dataChannel.onbufferedamountlow = sendNextChunk;
+                            sendNextChunk();
                         }
                         reader.readAsArrayBuffer(file);
                     }

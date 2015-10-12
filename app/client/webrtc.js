@@ -1,9 +1,12 @@
 
+// var logger = console.log;
+var logger = function() {};
+
 // run new WebRTC(true, someSecretId) to initiate a call
 WebRTC = class {
 
     constructor(isCaller, channel, handlers) {
-        console.log("starting RTC on channel: " + channel);
+        logger("starting RTC on channel: " + channel);
         handlers = handlers || {};
         
         var peerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection
@@ -20,12 +23,12 @@ WebRTC = class {
             // {optional: [{RtpDataChannels: true}]}
             null
         );
-        console.log("created peerConnection", pc);
+        logger("created peerConnection", pc);
         
         // send any ice candidates to the other peer
         pc.onicecandidate = function (evt) {
             if (evt.candidate) {
-                console.log("onICECandidate", evt);
+                logger("onICECandidate", evt);
                 Signaling.insert({
                     channel: channel,
                     type: (isCaller ? "caller" : "receiver"),
@@ -45,27 +48,30 @@ WebRTC = class {
         //     pc.addStream(stream);
         // });
 
+        var sendChannel;
         pc.ondatachannel = function(event) {
-            console.log("got data channel");
+            logger("got data channel");
             receiveChannel = event.channel;
             receiveChannel.onmessage = function(event){
-                console.log("got message");
+                // logger("got message");
                 var handler;
                 if (event.data instanceof ArrayBuffer) {
                     handler = "onArrayBuffer";
+                    // sendChannel.send("ok");
                 } else if (event.data instanceof Blob) {
                     handler = "onBlob";
                 } else if (typeof event.data === "string") {
+                    logger(event.data);
                     handler = "onText";
                 }
-                console.log("message type: " + handler);
+                // logger("message type: " + handler);
                 if (handler && handlers[handler]) {
                     handlers[handler](event.data);
                 }
             };
         };
         
-        this.sendChannel =
+        sendChannel = this.sendChannel =
             pc.createDataChannel("sendDataChannel", {reliable: true});
         // sendChannel.binaryType = 'arraybuffer';
         // sendChannel.send(data); // example
@@ -74,17 +80,17 @@ WebRTC = class {
             // make offer
             pc.createOffer(function(description) {
                 // offer = description;
-                console.log("createdOffer", description);
+                logger("createdOffer", description);
                 pc.setLocalDescription(description, function() {
                     Signaling.insert({
                         channel: channel,
                         offer: description.toJSON()
                     });
                 }, function(err) {
-                    console.log("couldn't set local description", err);
+                    logger("couldn't set local description", err);
                 });
             }, function(err) {
-                console.log("couldn't create offer", err);
+                logger("couldn't create offer", err);
             });
         }
 
@@ -93,44 +99,44 @@ WebRTC = class {
         // Signaling
 
         function update(id, data) {
-            console.log("signal", data);
+            logger("signal", data);
             // caller
             if (isCaller && data.answer) {
                 pc.setRemoteDescription(
                     new sessionDescription(data.answer),
                     function() {
-                        console.log("RTC: we are ready!");
+                        logger("RTC: we are ready!");
                         if (handlers.onConnection) {
                             handlers.onConnection(this);
                         }
                     }, function(err) {
-                        console.log("couldn't set remote description", err);
+                        logger("couldn't set remote description", err);
                     });
             }
             // receiver
             if (!isCaller && data.offer) {
-                console.log("we got an offer");
+                logger("we got an offer");
                 pc.setRemoteDescription(
                     new sessionDescription(data.offer),
                     function() {
-                        console.log("set remote description from offer");
+                        logger("set remote description from offer");
                         pc.createAnswer(function(description) {
-                            console.log("answer: " + JSON.stringify(description));
+                            logger("answer: " + JSON.stringify(description));
                             // answer = description;
                             pc.setLocalDescription(description, function() {
-                                console.log("set local description");
+                                logger("set local description");
                                 Signaling.insert({
                                     channel: channel,
                                     answer: description.toJSON()
                                 });
                             }, function(err) {
-                                console.log("couldn't set local description", err);
+                                logger("couldn't set local description", err);
                             });
                         }, function(err) {
-                            console.log("couldn't create answer", err);
+                            logger("couldn't create answer", err);
                         });
                     }, function(err) {
-                        console.log("couldn't set remote description", err);
+                        logger("couldn't set remote description", err);
                     }
                 );
             }
