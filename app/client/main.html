@@ -72,19 +72,6 @@
   {{/ionView}}
 </template>
 
-<template name="dropzone">
-  <div class="ui segment" id="upload">
-
-    Drop Files Here
-
-    <div class="ui progress" data-percent="0">
-      <div class="bar" style="width: 0%;">
-        <div class="progress">0%</div>
-      </div>
-      <div class="label">Uploading Files</div>
-    </div>
-  </div>
-</template>
 
 <template name="web">
   <div class="ui grid container main">
@@ -108,13 +95,6 @@
               <div class="ui grid">
                 <div class="four wide column">
                   <div id="qrcode"></div>
-                </div>
-
-                <div class="four wide column">
-                  <!-- {{> loginButtons}} -->
-                  {{#if webrtc}}
-                  {{> dropzone}}
-                  {{/if}}
                 </div>
 
                 <div class="eight wide column connections">
@@ -249,6 +229,7 @@
               </div>
             </div>
 
+
             <div class="ui raised segment files">
               <div class="ui purple ribbon label">
                 <i class="ion-document icon"></i>
@@ -260,6 +241,30 @@
               {{#with (reactive "ls")}}
               Directory: {{path}}
               <div class="ui segment files">
+                {{> filedrop dropHandlers}}
+
+                {{#if filedrop_over}}
+                <div class="ui segment red">
+                  Drop it!
+                </div>
+                {{else}}
+                {{#if filedrop_window}}
+                <div class="ui segment orange">
+                  Drop Files Here!
+                </div>
+                {{else}}
+                <div class="ui segment" id="upload">                 
+                  Drop Files Here
+                  <div class="ui progress" data-percent="0">
+                    <div class="bar" style="width: 0%;">
+                      <div class="progress">0%</div>
+                    </div>
+                  </div>
+                </div>
+                {{/if}}
+                {{/if}}
+               
+                
                 <div class="ui list">
                   {{#each data}}
                   <a class="item">
@@ -273,6 +278,7 @@
               </div>
               {{/with}}
             </div>
+
 
           </div>
           

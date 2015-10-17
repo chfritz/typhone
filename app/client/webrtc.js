@@ -1,8 +1,8 @@
 
-var logger = function(a,b,c) {
-    console.log(a,b,c);
-};
-// var logger = function() {};
+// var logger = function(a,b,c) {
+    // console.log(a,b,c);
+// };
+var logger = function() {};
 var chunkSize = (1 << 14) - 1; // 16KB
 
 // run new WebRTC(true, someSecretId) to initiate a call
@@ -65,7 +65,6 @@ WebRTC = class {
                 } else if (event.data instanceof Blob) {
                     handler = "onBlob";
                 } else if (typeof event.data === "string") {
-                    logger(event.data);
                     handler = "onText";
                 }
                 // logger("message type: " + handler);

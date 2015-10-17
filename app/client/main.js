@@ -37,7 +37,7 @@ var protocol = {
             });
         }
 
-        console.log("protocol" + JSON.stringify(obj));
+        // console.log("protocol" + JSON.stringify(obj));
         if (obj.cmd == "sending") {
             expectedFile = obj.file;
             buffer = new Uint8Array( expectedFile.size );
@@ -49,11 +49,15 @@ var protocol = {
                 sendLS();
             });
         } else if (obj.cmd == "get") {
-            // #HERE: read file obj.name and send it
+            downloadFile(obj.path);
         }
     },
     web: function(obj) {
-        if (obj.response) {
+        if (obj.cmd == "sending") {
+            expectedFile = obj.file;
+            buffer = new Uint8Array( expectedFile.size );
+            buffered = 0;
+        } else if (obj.response) {
             if (reactive[obj.response]) {
                 reactive[obj.response].set(obj);
             } else {
@@ -76,6 +80,27 @@ function receiveData(data) {
     }
 }
 
+blob = null;
+function receiveDataWeb(data) {
+    // console.log("receiveData, " + data.byteLength);
+
+    buffer.set( new Uint8Array( data ), buffered );
+    buffered += data.byteLength;
+    
+    if (expectedFile && buffered == expectedFile.size) {
+        console.log("done receiving");
+        blob = new Blob([buffer], {type: 'application/octet-binary'});
+        var a = document.createElement("a");
+        document.body.appendChild(a);
+        a.style = "display: none";
+        url = URL.createObjectURL(blob);
+        a.href = url;
+        a.download = expectedFile.name;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+}
+
 var fs;
 var cwd;
 function getFS() {
@@ -84,9 +109,22 @@ function getFS() {
             console.log("grantedBytes: " + grantedBytes);
             fs = _fs;
             cwd = fs.root;
-        }, function(err) {
-            console.log(err);
-        });
+        }, errorHandler);
+    });
+}
+
+function downloadFile(fileName) {
+    cwd.getFile(fileName, {}, function(fileEntry) {
+        fileEntry.file(function(file) {
+            rtc.sendFile(file, {
+                onProgress: function(i) {
+                    console.log(i * 100 / file.size);
+                },
+                onComplete: function(file) {
+                    console.log("completed sending file", file);
+                }
+            });
+        }, errorHandler);
     });
 }
 
@@ -126,7 +164,7 @@ function writeToDisk(name, data) {
     // navigator.webkitPersistentStorage.requestQuota(1 << 30, function(grantedBytes) {
         // window.requestFileSystem(PERSISTENT, grantedBytes, function(fs) {
             // console.log("grantedBytes: " + grantedBytes);
-    fs.root.getFile(name, {create: true}, function(fileEntry) {
+    cwd.getFile(name, {create: true}, function(fileEntry) {
         // Create a FileWriter object for our FileEntry.
         fileEntry.createWriter(function(fileWriter) {
 
@@ -204,31 +242,7 @@ Template.mobile.onRendered(function() {
         console.log("Oauth: " + JSON.stringify(_.keys(Oauth)));
         console.log("cordova: " + JSON.stringify(_.keys(cordova)));
         console.log("plugins: " + JSON.stringify(_.keys(cordova.plugins)));
-        console.log("navigator: " + JSON.stringify(navigator));
-        
-        window.resolveLocalFileSystemURI("file:///sdcard/", function(dirEntry) {
-            console.log(dirEntry.name);
-
-            function success(entries) {
-                var i;
-                for (i=0; i<entries.length; i++) {
-                    console.log(entries[i].name);
-                }
-            }
-
-            function fail(error) {
-                alert("Failed to list directory contents: " + error.code);
-            }
-
-            // Get a directory reader
-            var directoryReader = dirEntry.createReader();
-
-            // Get a list of all the entries in the directory
-            directoryReader.readEntries(success,fail);
-        }, function(err) {
-            console.log("error" + err);
-        });
-
+        console.log("navigator: " + JSON.stringify(navigator));       
 
         console.log("querying");
         var query = Clipboard.find();
@@ -289,7 +303,7 @@ Template.mobile.events({
                 // startRTC(false, result.text);
                 rtc = new WebRTC(false, result.text, {
                     onText: function(text) {
-                        console.log("received text: " + text);
+                        // console.log("received text: " + text);
                         protocol.mobile(JSON.parse(text));
                     },
                     onArrayBuffer: function(data) {
@@ -358,14 +372,15 @@ Template.web.onRendered(function() {
                 Session.set('webrtc', true);
             },
             onDataChannel: function() {
-                console.log("ls");
                 rtc.dataChannel.send(JSON.stringify({cmd: "ls"}));
             },
             onText: function(text) {
-                console.log("got text:", text);
+                // console.log("got text:", text);
                 protocol.web(JSON.parse(text));
+            },
+            onArrayBuffer: function(data) {
+                receiveDataWeb(data);
             }
-
         });
     });
     
@@ -407,7 +422,7 @@ Session.set('webrtc', false);
 Template.web.helpers({
     connections: function() {
         var data = Clipboard.findOne();
-        console.log("data", data);
+        // console.log("data", data);
         if (data) {
             return _.map(data.connections, function(conn) {
                 return { ip: conn.clientAddress,
@@ -421,38 +436,63 @@ Template.web.helpers({
     },
     reactive: function(field) {
         return reactive[field].get();
+    },
+    dropHandlers: function() {
+        return {
+            onDrop: function(files) {
+                _.each(files, function(file, index) {
+                    if (file.size < 1000000000) {
+                        console.log("upload", file);
+                        if (rtc) {
+                            rtc.sendFile(file, {
+                                onProgress: function(i) {
+                                    $('#upload > .progress').progress({
+                                        percent: Math.round(i * 100 / file.size)
+                                    });
+                                },
+                                onComplete: function(file) {
+                                    console.log("completed upload of file", file);
+                                }
+                            });
+                        }
+                    } else {
+                        alert("File " + file + " is too large (> 1000MB).");
+                    }
+                });
+            }
+        }
     }
 });
 
 // ---------------------------------------------------------
 
-Template.dropzone.onRendered(function() {
-    new dragAndDrop({
-        onComplete: function(files) {
-            _.each(files, function(file, index) {
-                if (file.size < 1000000000) {
-                    console.log("upload", file);
-                    if (rtc) {
-                        rtc.sendFile(file, {
-                            onProgress: function(i) {
-                                $('#upload > .progress').progress({
-                                    percent: Math.round(i * 100 / file.size)
-                                });
-                            },
-                            onComplete: function(file) {
-                                console.log("completed upload of file", file);
-                            }
-                        });
-                    }
-                } else {
-                    alert("File " + file + " is too large (> 1000MB).");
-                }
-            });
-        },
-        style: {
-        },
-        onEnter: function() {
-            console.log("enter");
-        }
-    }).add('#upload');
-});
+// Template.dropzone.onRendered(function() {
+//     new dragAndDrop({
+//         onComplete: function(files) {
+//             _.each(files, function(file, index) {
+//                 if (file.size < 1000000000) {
+//                     console.log("upload", file);
+//                     if (rtc) {
+//                         rtc.sendFile(file, {
+//                             onProgress: function(i) {
+//                                 $('#upload > .progress').progress({
+//                                     percent: Math.round(i * 100 / file.size)
+//                                 });
+//                             },
+//                             onComplete: function(file) {
+//                                 console.log("completed upload of file", file);
+//                             }
+//                         });
+//                     }
+//                 } else {
+//                     alert("File " + file + " is too large (> 1000MB).");
+//                 }
+//             });
+//         },
+//         style: {
+//         },
+//         onEnter: function() {
+//             console.log("enter");
+//         }
+//     }).add('#upload');
+// });

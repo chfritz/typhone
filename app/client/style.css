@@ -22,3 +22,7 @@ body.web {
 .segment {
     background: rgba(256,256,256,0.8) !important;
 }
+
+.ui.segment.files .list .item {
+    border: none;
+}
