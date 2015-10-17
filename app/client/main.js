@@ -1,20 +1,67 @@
 
-// var debug = "debug";
-var debug;
+function errorHandler(err) {
+    console.log(err);
+}
+
+rtc = null;
 
 // ---------------------------------------------------------
+
+var reactive = {
+    ls: new ReactiveVar(null)
+};
 
 var expectedFile;
 var buffer;
 var buffered = 0;
-function protocol(obj) {
-    console.log("protocol" + JSON.stringify(obj));
-    if (obj.cmd == "sending") {
-        expectedFile = obj.file;
-        buffer = new Uint8Array( expectedFile.size );
-        buffered = 0;
+var protocol = {
+    mobile: function(obj) {
+
+        // get a listing and send it
+        function sendLS() {
+            ls(function(list) {
+                if (cwd.fullPath != "/") {
+                    list.push({
+                        name: "..",
+                        isFile: false,
+                        isDirectory: true
+                    });
+                }
+                var string = JSON.stringify({
+                    response: "ls",
+                    path: cwd.fullPath,
+                    data: _.sortBy(list, "name")
+                }); 
+                console.log(string);
+                rtc.sendText(string);
+            });
+        }
+
+        console.log("protocol" + JSON.stringify(obj));
+        if (obj.cmd == "sending") {
+            expectedFile = obj.file;
+            buffer = new Uint8Array( expectedFile.size );
+            buffered = 0;
+        } else if (obj.cmd == "ls") {
+            sendLS();
+        } else if (obj.cmd == "cd") {
+            cd(obj.path, function() {
+                sendLS();
+            });
+        } else if (obj.cmd == "get") {
+            // #HERE: read file obj.name and send it
+        }
+    },
+    web: function(obj) {
+        if (obj.response) {
+            if (reactive[obj.response]) {
+                reactive[obj.response].set(obj);
+            } else {
+                console.log("unrecognized response", obj);
+            }
+        }
     }
-}
+};
 
 function receiveData(data) {
     // console.log("receiveData, " + data.byteLength);
@@ -29,53 +76,100 @@ function receiveData(data) {
     }
 }
 
-function writeToDisk(name, data) {
-    function errorHandler(err) {
-        console.log(err);
+var fs;
+var cwd;
+function getFS() {
+    navigator.webkitPersistentStorage.requestQuota(1 << 30, function(grantedBytes) {
+        window.requestFileSystem(PERSISTENT, grantedBytes, function(_fs) {
+            console.log("grantedBytes: " + grantedBytes);
+            fs = _fs;
+            cwd = fs.root;
+        }, function(err) {
+            console.log(err);
+        });
+    });
+}
+
+function cd(path, callback) {
+    cwd.getDirectory(path, {create: false}, function(dir) {
+        console.log("cd'ed to " + dir.name);
+        cwd = dir;
+        callback();
+    }, errorHandler);
+}
+
+function ls(callback) {
+    var dirReader = cwd.createReader();
+    var entries = [];
+    
+    function toArray(list) {
+        return Array.prototype.slice.call(list || [], 0);
     }
 
-    navigator.webkitPersistentStorage.requestQuota(1 << 30, function(grantedBytes) {
-        window.requestFileSystem(PERSISTENT, grantedBytes, function(fs) {
-            console.log("grantedBytes: " + grantedBytes);
-            fs.root.getFile(name, {create: true}, function(fileEntry) {
-                // Create a FileWriter object for our FileEntry.
-                fileEntry.createWriter(function(fileWriter) {
-
-                    // we again, as on the sender side, need to go
-                    // about in chunks, because the FileWriter doesn't
-                    // like to write a lot all at once.
-                    var written = 0;
-                    var chunkSize = 1 << 20; // 1MB
-                    function writeNext() {
-                        fileWriter.write(
-                            data.slice(
-                                written,
-                                Math.min(data.byteLength, written + chunkSize)));
-                        written += chunkSize;
-                    }                        
-
-                    fileWriter.onwrite = function(e) {
-                        if (written < data.byteLength) {
-                            console.log('writing..');
-                            writeNext();
-                        } else {
-                            console.log('Write completed.');
-                        }
-                    };
-                    fileWriter.onerror = function(e) {
-                        console.log('Write failed: ' + e.toString());
-                    };
-
-                    writeNext();
-                    
-                }, errorHandler);
-            }, errorHandler);
+    // Call the reader.readEntries() until no more results are returned.
+    var readEntries = function() {
+        dirReader.readEntries (function(results) {
+            if (!results.length) {
+                callback(entries.sort());
+            } else {
+                entries = entries.concat(toArray(results));
+                readEntries();
+            }
         }, errorHandler);
-    });
+    };
+    
+    readEntries(); // Start reading dirs.   
+}
+
+function writeToDisk(name, data) {
+
+    // navigator.webkitPersistentStorage.requestQuota(1 << 30, function(grantedBytes) {
+        // window.requestFileSystem(PERSISTENT, grantedBytes, function(fs) {
+            // console.log("grantedBytes: " + grantedBytes);
+    fs.root.getFile(name, {create: true}, function(fileEntry) {
+        // Create a FileWriter object for our FileEntry.
+        fileEntry.createWriter(function(fileWriter) {
+
+            // we again, as on the sender side, need to go
+            // about in chunks, because the FileWriter doesn't
+            // like to write a lot all at once.
+            var written = 0;
+            var chunkSize = 1 << 20; // 1MB
+            function writeNext() {
+                fileWriter.write(
+                    data.slice(
+                        written,
+                        Math.min(data.byteLength, written + chunkSize)));
+                written += chunkSize;
+            }                        
+
+            fileWriter.onwrite = function(e) {
+                if (written < data.byteLength) {
+                    console.log('writing..');
+                    writeNext();
+                } else {
+                    console.log('Write completed.');
+                }
+            };
+            fileWriter.onerror = function(e) {
+                console.log('Write failed: ' + e.toString());
+            };
+
+            writeNext();
+            
+        }, errorHandler);
+    }, errorHandler);
 };
 
 
 // ---------------------------------------------------------
+
+Meteor.startup(function() {
+    if (Meteor.isCordova) {
+        getFS();
+        // $('head').append('<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">')
+    }
+});
 
 Template.mobile.helpers({
     clipboard: function() {
@@ -177,12 +271,6 @@ Template.mobile.onRendered(function() {
             }
         });
 
-        if (debug) {
-            sessions.push(debug);
-            Meteor.subscribe('clipboard', debug, device);
-            // startRTC(false, result.text);
-            new WebRTC(false, debug);
-        }        
     }
 });
 
@@ -199,10 +287,10 @@ Template.mobile.events({
                 sessions.push(result.text);
                 Meteor.subscribe('clipboard', result.text, device);
                 // startRTC(false, result.text);
-                new WebRTC(false, result.text, {
+                rtc = new WebRTC(false, result.text, {
                     onText: function(text) {
                         console.log("received text: " + text);
-                        protocol(JSON.parse(text));
+                        protocol.mobile(JSON.parse(text));
                     },
                     onArrayBuffer: function(data) {
                         receiveData(data);
@@ -238,7 +326,6 @@ function subscribeUser() {
     Meteor.subscribe('clipboard', id);
 }
 
-rtc = null;
 Template.web.onRendered(function() {
     // TODO: this creates too many collection (on per page load;
     // change that to once per established connection between
@@ -252,52 +339,40 @@ Template.web.onRendered(function() {
         });
     }
 
-    if (debug) {
-        sessions.push(debug);
-        Meteor.subscribe('clipboard', debug);
-        // startRTC(false, result.text);
-        rtc = new WebRTC(true, debug, {
+    Clipboard.insert({ text: "type here" }, function(err, id) {
+        sessions.push(id);
+        $('#qrcode').qrcode( { 
+            text: id,
+            render: 'canvas',
+            size: 60,
+            ecLevel: 'H',
+            fill: "#000",
+            // background: "#ffffff",
+            radius: 2.0,
+        });      
+        Meteor.subscribe('clipboard', id);
+        // Signaling.insert({channel: id})
+        // startRTC(true, id);
+        rtc = new WebRTC(true, id, {
             onConnection: function() {
                 Session.set('webrtc', true);
+            },
+            onDataChannel: function() {
+                console.log("ls");
+                rtc.dataChannel.send(JSON.stringify({cmd: "ls"}));
+            },
+            onText: function(text) {
+                console.log("got text:", text);
+                protocol.web(JSON.parse(text));
             }
+
         });
-    } else {
-        Clipboard.insert({ text: "type here" }, function(err, id) {
-            sessions.push(id);
-            $('#qrcode').qrcode( { 
-                text: id,
-                render: 'canvas',
-                size: 60,
-                ecLevel: 'H',
-                fill: "#000",
-                // background: "#ffffff",
-                radius: 2.0,
-            });      
-            Meteor.subscribe('clipboard', id);
-            Signaling.insert({channel: id})
-            // startRTC(true, id);
-            rtc = new WebRTC(true, id, {
-                onConnection: function() {
-                    Session.set('webrtc', true);
-                }
-            });
-        });
-    }
+    });
     
     $("body").addClass("web");
 });
 
 Template.web.events({
-    // 'keydown input': function(event, template) {
-    //     if (event.keyCode == 13) {
-    //         var val = template.$(event.target).val();
-    //         Clipboard.update(Session.get('id'), {$set: {
-    //             text: val,
-    //             cmd: event.target.dataset.cmd
-    //         }});
-    //         return false;
-    //     }
-    // },
     'keydown .action': function(event, template) {
         if (event.keyCode == 13) {
             var form = template.$(event.target).closest('.form');
@@ -311,8 +386,21 @@ Template.web.events({
             });
             return false;
         }
+    },
+    'click .files .item': function() {
+        console.log('clicked on', this);
+        if (this.isDirectory) {
+            rtc.dataChannel.send(JSON.stringify({
+                cmd: "cd",
+                path: this.name
+            }));
+        } else if (this.isFile) {
+            rtc.dataChannel.send(JSON.stringify({
+                cmd: "get",
+                path: this.name
+            }));
+        }
     }
-
 });
 
 Session.set('webrtc', false);
@@ -330,6 +418,9 @@ Template.web.helpers({
     },
     webrtc: function() {
         return Session.get('webrtc');
+    },
+    reactive: function(field) {
+        return reactive[field].get();
     }
 });
 
@@ -342,56 +433,16 @@ Template.dropzone.onRendered(function() {
                 if (file.size < 1000000000) {
                     console.log("upload", file);
                     if (rtc) {
-                        // send metadata:
-                        rtc.dataChannel.send(JSON.stringify({
-                            cmd: "sending",
-                            file: _.extend({}, file)
-                        }));
-                        // send data:
-                        rtc.dataChannel.binaryType = 'arraybuffer';
-                        var reader = new window.FileReader();
-                        reader.onload = function(e) {
-                            console.log("sending");
-                            // rtc.dataChannel.send(e.target.result);
-                            // #HERE: chunk file down into 16kb messages
-                            // also add a response from receiver before
-                            // proceeding                           
-                            var chunkSize = 1 << 14; // 16KB
-                            var maxBuffer = chunkSize * 10;
-                            var buffer = e.target.result;
-                            
-                            // for (var i = 0; i < file.size; i += chunkSize) {
-                            //     console.log("offset: ", i);
-                            //     rtc.dataChannel.send(
-                            //         (new Int8Array(buffer, i,
-                            //                        Math.min(chunkSize, file.size - i)))
-                            //             .buffer
-                            //     );
-                            // }
-
-                            var i = 0;
-                            function sendNextChunk() {
-                                $('#upload .progress').progress({
+                        rtc.sendFile(file, {
+                            onProgress: function(i) {
+                                $('#upload > .progress').progress({
                                     percent: Math.round(i * 100 / file.size)
                                 });
-                                if (rtc.dataChannel.bufferedAmount < maxBuffer) {
-                                    rtc.dataChannel.send(
-                                        // (new Uint8Array(buffer, i,
-                                        //                 Math.min(chunkSize, file.size - i)))
-                                        // .buffer
-                                        buffer.slice(i, Math.min(file.size, i + chunkSize))
-                                    );
-                                    i += chunkSize;
-                                }
-                                if (i < file.size) {
-                                    window.setTimeout(sendNextChunk, 1);
-                                }
+                            },
+                            onComplete: function(file) {
+                                console.log("completed upload of file", file);
                             }
-                            
-                            // rtc.dataChannel.onbufferedamountlow = sendNextChunk;
-                            sendNextChunk();
-                        }
-                        reader.readAsArrayBuffer(file);
+                        });
                     }
                 } else {
                     alert("File " + file + " is too large (> 1000MB).");

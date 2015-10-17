@@ -1,6 +1,9 @@
 
-// var logger = console.log;
-var logger = function() {};
+var logger = function(a,b,c) {
+    console.log(a,b,c);
+};
+// var logger = function() {};
+var chunkSize = (1 << 14) - 1; // 16KB
 
 // run new WebRTC(true, someSecretId) to initiate a call
 WebRTC = class {
@@ -51,6 +54,7 @@ WebRTC = class {
         var sendChannel;
         pc.ondatachannel = function(event) {
             logger("got data channel");
+            // sendChannel.send("ok");
             receiveChannel = event.channel;
             receiveChannel.onmessage = function(event){
                 // logger("got message");
@@ -69,6 +73,10 @@ WebRTC = class {
                     handlers[handler](event.data);
                 }
             };
+
+            if (handlers.onDataChannel) {
+                handlers.onDataChannel(event);
+            }            
         };
         
         sendChannel = this.sendChannel =
@@ -158,7 +166,63 @@ WebRTC = class {
 
     get peerConnection() { return this.pc; }
     get dataChannel() { return this.sendChannel; }
+
+    // ------------------------------------------------------------
+    // convenience functions
     
+    /** send a file in chunks */   
+    sendFile(file, callbacks) {
+        var dataChannel = this.sendChannel;
+        // send metadata:
+        dataChannel.send(JSON.stringify({
+            cmd: "sending",
+            file: _.extend({}, file)
+        }));
+        // send data:
+        dataChannel.binaryType = 'arraybuffer';
+        var reader = new window.FileReader();
+        reader.onload = function(e) {
+            var maxBuffer = chunkSize * 10;
+            var buffer = e.target.result;
+            
+            var i = 0;
+            function sendNextChunk() {
+                callbacks.onProgress && callbacks.onProgress(i);
+                if (dataChannel.bufferedAmount < maxBuffer) {
+                    dataChannel.send(
+                        buffer.slice(i, Math.min(file.size, i + chunkSize))
+                    );
+                    i += chunkSize;
+                }
+                if (i < file.size) {
+                    window.setTimeout(sendNextChunk, 1);
+                } else {
+                    callbacks.onComplete && callbacks.onComplete(file);
+                }
+            }
+            sendNextChunk();
+        }
+        reader.readAsArrayBuffer(file);
+    }
+
+    /** send a string in chunks */
+    sendText(text, callbacks) {
+        callbacks = callbacks || {};
+        var dataChannel = this.sendChannel;
+        var i = 0;
+        function sendNextSlice() {
+            dataChannel.send(
+                text.slice(i, Math.min(text.length, i + chunkSize))
+            );
+            i += chunkSize;
+            if (i < text.length) {
+                window.setTimeout(sendNextSlice, 1);
+            } else {
+                callbacks.onComplete && callbacks.onComplete(text);
+            }
+        }
+        sendNextSlice();
+    }    
 };
 
 

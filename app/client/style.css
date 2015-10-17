@@ -16,6 +16,7 @@ image credit: https://www.flickr.com/photos/pestoverde/17161382542/in/photolist-
 body.web {
     background: url("/imgs/17161382542_f1756e55a1_o.jpg");
     background-size: cover;
+    overflow: auto;
 }
 
 .segment {

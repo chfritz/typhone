@@ -1,6 +1,6 @@
 <head>
   <title>TyPhone</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <!-- <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"> -->
 </head>
 
 <body>
@@ -78,7 +78,7 @@
     Drop Files Here
 
     <div class="ui progress" data-percent="0">
-      <div class="bar" style="transition-duration: 300ms; width: 0%;">
+      <div class="bar" style="width: 0%;">
         <div class="progress">0%</div>
       </div>
       <div class="label">Uploading Files</div>
@@ -247,6 +247,31 @@
                   <i class="ion-android-textsms icon"></i>
                 </div>
               </div>
+            </div>
+
+            <div class="ui raised segment files">
+              <div class="ui purple ribbon label">
+                <i class="ion-document icon"></i>
+                Files
+              </div>
+              <span>Manage Files</span>
+              <p></p>
+
+              {{#with (reactive "ls")}}
+              Directory: {{path}}
+              <div class="ui segment files">
+                <div class="ui list">
+                  {{#each data}}
+                  <a class="item">
+                    <i class="{{#if isFile}}file{{/if}}
+                              {{#if isDirectory}}folder{{/if}} 
+                              icon"></i>
+                    {{name}}
+                  </a>
+                  {{/each}}
+                </div>
+              </div>
+              {{/with}}
             </div>
 
           </div>
