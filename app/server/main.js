@@ -5,16 +5,19 @@ Meteor.startup(function () {
     Accounts.onLogin(function() {
         // create collection if it doesn't yet exist
         console.log("creating new collection for user", Meteor.userId());
-        Clipboard.upsert({_id: Meteor.userId()}, {});
+        if (!Clipboard.findOne({_id: Meteor.userId()})) {
+            Clipboard.insert({_id: Meteor.userId()}, {});
+        }
     });
 });
 
 
 Meteor.publish('clipboard', function(id, device) {
+    id = id || this.userId;
     if (id) {
         var connection = this.connection;
 
-        console.log("new connection", connection);
+        console.log(id, "new connection", connection);
         if (device) {
             connection.device = device;
         }

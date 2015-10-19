@@ -228,10 +228,10 @@ Template.mobile.onRendered(function() {
     console.log("onRendered " + JSON.stringify(device));
     if (Meteor.isCordova) {
         if (Meteor.userId()) {
-            subscribeUser();
+            subscribeUser(device);
         } else {
             Accounts.onLogin(function() {
-                subscribeUser();
+                subscribeUser(device);
             });
         }
 
@@ -301,15 +301,7 @@ Template.mobile.events({
                 sessions.push(result.text);
                 Meteor.subscribe('clipboard', result.text, device);
                 // startRTC(false, result.text);
-                rtc = new WebRTC(false, result.text, {
-                    onText: function(text) {
-                        // console.log("received text: " + text);
-                        protocol.mobile(JSON.parse(text));
-                    },
-                    onArrayBuffer: function(data) {
-                        receiveData(data);
-                    }
-                });
+                startWebRTC(id);
             }, 
             function (error) {
                 console.log("Scanning failed: " + error);
@@ -333,40 +325,31 @@ Template.mobile.events({
 
 // ---------------------------------------------------------
 
-function subscribeUser() {
+function subscribeUser(device) {
     var id = Meteor.userId();
     console.log("subscribing to user collection", id);
     sessions.push(id);
-    Meteor.subscribe('clipboard', id);
+    if (Meteor.isCordova) {
+        Meteor.subscribe('clipboard', undefined, device);
+    } else {
+        Meteor.subscribe('clipboard');
+        startWebRTC(id);
+    }
 }
 
-Template.web.onRendered(function() {
-    // TODO: this creates too many collection (on per page load;
-    // change that to once per established connection between
-    // web+mobile)
+function startWebRTC(id) {
 
-    if (Meteor.userId()) {
-        subscribeUser();
-    } else {
-        Accounts.onLogin(function() {
-            subscribeUser();
+    if (Meteor.isCordova) {
+        rtc = new WebRTC(false, result.text, {
+            onText: function(text) {
+                // console.log("received text: " + text);
+                protocol.mobile(JSON.parse(text));
+            },
+            onArrayBuffer: function(data) {
+                receiveData(data);
+            }
         });
-    }
-
-    Clipboard.insert({ text: "type here" }, function(err, id) {
-        sessions.push(id);
-        $('#qrcode').qrcode( { 
-            text: id,
-            render: 'canvas',
-            size: 60,
-            ecLevel: 'H',
-            fill: "#000",
-            // background: "#ffffff",
-            radius: 2.0,
-        });      
-        Meteor.subscribe('clipboard', id);
-        // Signaling.insert({channel: id})
-        // startRTC(true, id);
+    } else {
         rtc = new WebRTC(true, id, {
             onConnection: function() {
                 Session.set('webrtc', true);
@@ -382,8 +365,40 @@ Template.web.onRendered(function() {
                 receiveDataWeb(data);
             }
         });
-    });
-    
+    }
+};
+
+
+Template.web.onRendered(function() {
+    // TODO: this creates too many collection (on per page load;
+    // change that to once per established connection between
+    // web+mobile)
+
+    if (Meteor.userId()) {
+        subscribeUser();
+    } else {
+        Accounts.onLogin(function() {
+            subscribeUser();
+            $('#qrcode').hide();            
+        });
+
+        Clipboard.insert({ text: "type here" }, function(err, id) {
+            sessions.push(id);
+            $('#qrcode').qrcode( { 
+                text: id,
+                render: 'canvas',
+                size: 60,
+                ecLevel: 'H',
+                fill: "#000",
+                // background: "#ffffff",
+                radius: 2.0,
+            });      
+            Meteor.subscribe('clipboard', id);
+            startWebRTC(id);
+        });
+
+    }
+
     $("body").addClass("web");
 });
 
