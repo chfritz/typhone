@@ -1,9 +1,13 @@
 
-// var logger = function(a,b,c) {
-    // console.log(a,b,c);
-// };
-var logger = function() {};
+var logger = function(a,b,c) {
+    console.log(a,b,c);
+};
+// var logger = function() {};
 var chunkSize = (1 << 14) - 1; // 16KB
+
+function toObject(x) {
+    return JSON.parse(JSON.stringify(x));
+}
 
 // run new WebRTC(true, someSecretId) to initiate a call
 WebRTC = class {
@@ -35,7 +39,7 @@ WebRTC = class {
                 Signaling.insert({
                     channel: channel,
                     type: (isCaller ? "caller" : "receiver"),
-                    candidate: evt.candidate.toJSON()
+                    candidate: toObject(evt.candidate) // .toJSON()
                 });
             }
         };
@@ -91,7 +95,7 @@ WebRTC = class {
                 pc.setLocalDescription(description, function() {
                     Signaling.insert({
                         channel: channel,
-                        offer: description.toJSON()
+                        offer: toObject(description) //.toJSON()
                     });
                 }, function(err) {
                     logger("couldn't set local description", err);
@@ -134,7 +138,7 @@ WebRTC = class {
                                 logger("set local description");
                                 Signaling.insert({
                                     channel: channel,
-                                    answer: description.toJSON()
+                                    answer: toObject(description) //.toJSON()
                                 });
                             }, function(err) {
                                 logger("couldn't set local description", err);

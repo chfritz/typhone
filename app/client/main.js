@@ -203,8 +203,17 @@ function writeToDisk(name, data) {
 // ---------------------------------------------------------
 
 Meteor.startup(function() {
+    console.log("start");
+    console.log(Meteor.isCordova);
     if (Meteor.isCordova) {
-        getFS();
+        if (cordova.platformId == "ios"
+            && cordova.plugins.iosrtc.registerGlobals) {
+            console.log("detected iOS, registering RTC plugin globally");
+            cordova.plugins.iosrtc.registerGlobals();
+        } else {
+            // TODO: do this for iOS, too
+            getFS();
+        }
         // $('head').append('<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">')
     }
 });
@@ -333,14 +342,15 @@ function subscribeUser(device) {
         Meteor.subscribe('clipboard', undefined, device);
     } else {
         Meteor.subscribe('clipboard');
-        startWebRTC(id);
     }
+    startWebRTC(id);
 }
 
 function startWebRTC(id) {
 
+    console.log("startWebRTC");
     if (Meteor.isCordova) {
-        rtc = new WebRTC(false, result.text, {
+        rtc = new WebRTC(false, id, {
             onText: function(text) {
                 // console.log("received text: " + text);
                 protocol.mobile(JSON.parse(text));

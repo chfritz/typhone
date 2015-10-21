@@ -76,55 +76,75 @@
 <template name="web">
   <div class="ui grid container main">
 
-    <div class="row">
+    <div class="row" style="margin-top: 40px; margin-bottom: 30px;">
       <div class="column">
-        <div class="ui bottom attached message">
-          <div class="ui grid">
-            <div class="two wide column">
-              <img src="imgs/logo_hires_trans.png"
-                   style="width: 100%"/>
+        <!-- <div class="ui bottom attached raised message"> -->
 
+        <h2 class="ui header">
+          <img src="imgs/logo_hires_trans.png">
+          <div class="content">
+            TyPhone
+            <div class="sub header">
+              Remote control your phone. Just install the app, open
+              it, scan the QR code on this page, or login here and in
+              the app.
+            </div>
+          </div>
+        </h2>
+        
+          <!-- <div class="ui grid"> -->
+          <!--   <div class="two wide column"> -->
+          <!--     <img src="imgs/logo_hires_trans.png" -->
+          <!--          style="width: 100%"/> -->
+
+          <!--     <a href="https://play.google.com/store/apps/details?id=com.idimbn19udlnf6trycde"> -->
+          <!--       <img alt="Get it on Google Play" -->
+          <!--            src="https://developer.android.com/images/brand/en_generic_rgb_wo_45.png" /> -->
+          <!--     </a> -->
+              
+          <!--   </div> -->
+          <!--   <div class="fourteen wide column"> -->
+          <!--     <h1 class="ui header">TyPhone</h1> -->
+          <!--     <p> -->
+          <!--       Remote control your phone. Just install the app, open it, -->
+          <!--       scan the QR code on this page, or login here and in the -->
+          <!--       app. -->
+          <!--     </p> -->
+
+          <div class="ui grid">
+            <div class="four wide column">
               <a href="https://play.google.com/store/apps/details?id=com.idimbn19udlnf6trycde">
                 <img alt="Get it on Google Play"
                      src="https://developer.android.com/images/brand/en_generic_rgb_wo_45.png" />
               </a>
-              
             </div>
-            <div class="fourteen wide column">
-              <h1 class="ui header">TyPhone</h1>
-              <p>
-                Remote control your phone. Just install the app, open it,
-                scan the QR code on this page, or login here and in the
-                app.
-              </p>
-
-              <div class="ui grid">
-                <div class="four wide column">
-                  <div id="qrcode"></div>
-                  {{> loginButtons}}
-                </div>
-
-                <div class="eight wide column connections">
-                  Connected to:
-                  <ul>
-                    {{#each connections}}
-                    {{#if device}}
-                    <li>
-                      <i class="icon ion-iphone"></i>
-                      {{device.model}}
-                      ({{device.platform}} {{device.version}}, {{ip}})
-                    </li>
-                    {{/if}}
-                    {{else}}
-                    Nothing.
-                    {{/each}}
-                  </ul>
-                </div>
-              </div>
-              
+            
+            <div class="four wide column">
+              <div id="qrcode"></div>
+              {{> loginButtons}}
+            </div>
+            
+            <div class="eight wide column connections">
+              Connected to:
+              <ul>
+                {{#each connections}}
+                {{#if device}}
+                <li>
+                  <i class="icon ion-iphone"></i>
+                  {{device.model}}
+                  ({{device.platform}} {{device.version}}, {{ip}})
+                </li>
+                {{/if}}
+                {{else}}
+                Nothing.
+                {{/each}}
+              </ul>
             </div>
           </div>
-        </div>
+              
+            <!-- </div> -->
+          <!-- </div> -->
+        <!-- </div> -->
       </div>
     </div>
 
