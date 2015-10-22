@@ -104,13 +104,14 @@ function receiveDataWeb(data) {
 var fs;
 var cwd;
 function getFS() {
-    navigator.webkitPersistentStorage.requestQuota(1 << 30, function(grantedBytes) {
-        window.requestFileSystem(PERSISTENT, grantedBytes, function(_fs) {
-            console.log("grantedBytes: " + grantedBytes);
-            fs = _fs;
-            cwd = fs.root;
-        }, errorHandler);
-    });
+    // navigator.webkitPersistentStorage.requestQuota(1 << 30, function(grantedBytes) {
+    var grantedBytes = 1 << 30;
+    window.requestFileSystem(PERSISTENT, grantedBytes, function(_fs) {
+        console.log("grantedBytes: " + grantedBytes);
+        fs = _fs;
+        cwd = fs.root;
+    }, errorHandler);
+    // });
 }
 
 function downloadFile(fileName) {
@@ -210,10 +211,10 @@ Meteor.startup(function() {
             && cordova.plugins.iosrtc.registerGlobals) {
             console.log("detected iOS, registering RTC plugin globally");
             cordova.plugins.iosrtc.registerGlobals();
-        } else {
+        // } else {
             // TODO: do this for iOS, too
-            getFS();
         }
+        getFS();
         // $('head').append('<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">')
     }
 });
