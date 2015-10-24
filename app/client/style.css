@@ -27,3 +27,7 @@ body.web {
 .ui.segment.files .list .item {
     border: none;
 }
+
+.ui.segment.files .list .item .content {
+    width: 100%;
+}

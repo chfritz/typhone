@@ -209,28 +209,7 @@
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- ........................................ -->
-          
-          <div class="column">
-            <div class="ui raised segment url">
-              <div class="ui black ribbon label">
-                <i class="ion-android-call icon"></i>
-                Phone
-              </div>
-              <span>Dial a phone number</span>
-              <p></p>
-              <div class="ui form">
-                <div class="ui fluid left icon input">
-                  <input data-cmd="tel"
-                         data-field="number"
-                         class="action"
-                         placeholder="+1 555 555-5555">
-                  <i class="ion-android-call icon"></i>
-                </div>
-              </div>
-            </div>
 
             <div class="ui raised segment sms">
               <div class="ui yellow ribbon label">
@@ -255,7 +234,29 @@
                 </div>
               </div>
             </div>
+           
+          </div>
 
+          <!-- ........................................ -->
+          
+          <div class="column">
+            <div class="ui raised segment url">
+              <div class="ui black ribbon label">
+                <i class="ion-android-call icon"></i>
+                Phone
+              </div>
+              <span>Dial a phone number</span>
+              <p></p>
+              <div class="ui form">
+                <div class="ui fluid left icon input">
+                  <input data-cmd="tel"
+                         data-field="number"
+                         class="action"
+                         placeholder="+1 555 555-5555">
+                  <i class="ion-android-call icon"></i>
+                </div>
+              </div>
+            </div>
 
             <div class="ui raised segment files">
               <div class="ui purple ribbon label">
@@ -289,8 +290,8 @@ TODO, #HERE the above two don't get along!
                 <div>Drop Files Here!</div>
                 {{else}}
                 {{#if (reactive "uploading")}}
-                <div class="ui tiny progress" data-percent="0">
-                  <div class="bar" style="width: 0%;">
+                <div class="ui tiny progress uploading" data-percent="0">
+                  <div class="bar" style="transition-duration: 300ms; width: 0%;">
                   </div>
                   <div class="label">{{reactive "uploading" "name"}}</div>
                 </div>
@@ -310,7 +311,19 @@ TODO, #HERE the above two don't get along!
                     <i class="{{#if isFile}}file{{/if}}
                               {{#if isDirectory}}folder{{/if}} 
                               icon"></i>
-                    {{name}}
+                    <div class="content">
+                      {{name}}
+                      {{#if (reactive "downloading")}}
+                      {{#if compare (reactive "downloading" "expectedFile" "name") "==" (name)}}
+                      <div class="ui bottom attached progress downloading"
+                           data-percent="0">
+                        <div class="bar"
+                             style="transition-duration: 300ms; width: 0%;">
+                        </div>
+                      </div>
+                      {{/if}}
+                      {{/if}}
+                    </div>
                   </a>
                   {{/each}}
                 </div>

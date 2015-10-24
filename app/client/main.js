@@ -9,7 +9,8 @@ rtc = null;
 
 var reactive = {
     ls: new ReactiveVar(null),
-    uploading: new ReactiveVar(false)
+    uploading: new ReactiveVar(false),
+    downloading: new ReactiveVar(false)
 };
 
 var expectedFile;
@@ -55,9 +56,11 @@ var protocol = {
     },
     web: function(obj) {
         if (obj.cmd == "sending") {
-            expectedFile = obj.file;
-            buffer = new Uint8Array( expectedFile.size );
-            buffered = 0;
+            reactive.downloading.set({
+                expectedFile: obj.file,
+                buffered: 0
+            });
+            buffer = new Uint8Array( obj.file.size );
         } else if (obj.response) {
             if (reactive[obj.response]) {
                 reactive[obj.response].set(obj);
@@ -85,21 +88,32 @@ blob = null;
 function receiveDataWeb(data) {
     // console.log("receiveData, " + data.byteLength);
 
-    buffer.set( new Uint8Array( data ), buffered );
-    buffered += data.byteLength;
+    downloading = reactive.downloading.get()
+    buffer.set( new Uint8Array( data ), downloading.buffered );
+    downloading.buffered += data.byteLength;
     
-    if (expectedFile && buffered == expectedFile.size) {
+    $('.downloading.progress').progress({
+        percent: Math.round(downloading.buffered * 100
+                            / downloading.expectedFile.size)
+    });
+
+    if (downloading
+        && downloading.expectedFile
+        && downloading.buffered == downloading.expectedFile.size) {
+        
         console.log("done receiving");
         blob = new Blob([buffer], {type: 'application/octet-binary'});
         var a = document.createElement("a");
         document.body.appendChild(a);
         a.style = "display: none";
-        url = URL.createObjectURL(blob);
+        var url = URL.createObjectURL(blob);
         a.href = url;
-        a.download = expectedFile.name;
+        a.download = downloading.expectedFile.name;
         a.click();
         URL.revokeObjectURL(url);
-    }
+        downloading = false;
+    }   
+    reactive.downloading.set(downloading);
 }
 
 var fs;
@@ -479,7 +493,7 @@ Template.web.helpers({
                             reactive.uploading.set(file);
                             rtc.sendFile(file, {
                                 onProgress: function(i) {
-                                    $('.files .progress').progress({
+                                    $('.uploading.progress').progress({
                                         percent: Math.round(i * 100 / file.size)
                                     });
                                 },
