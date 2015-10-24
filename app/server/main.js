@@ -1,9 +1,11 @@
 Meteor.startup(function () {
-    // code to run on server at startup
+
+    // clean up
+    Clipboard.remove({});
     Signaling.remove({});
 
     Accounts.onLogin(function() {
-        // create collection if it doesn't yet exist
+        // create user collection if it doesn't yet exist
         console.log("creating new collection for user", Meteor.userId());
         if (!Clipboard.findOne({_id: Meteor.userId()})) {
             Clipboard.insert({_id: Meteor.userId()}, {});

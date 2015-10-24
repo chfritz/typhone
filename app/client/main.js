@@ -8,7 +8,8 @@ rtc = null;
 // ---------------------------------------------------------
 
 var reactive = {
-    ls: new ReactiveVar(null)
+    ls: new ReactiveVar(null),
+    uploading: new ReactiveVar(false)
 };
 
 var expectedFile;
@@ -460,8 +461,13 @@ Template.web.helpers({
     webrtc: function() {
         return Session.get('webrtc');
     },
-    reactive: function(field) {
-        return reactive[field].get();
+    reactive: function() {
+        // usage: {{reactive "ls" "path"}}
+        var item = reactive[arguments[0]].get();
+        for (i = 1; item && i < arguments.length-1; i++) {
+            item = item[arguments[i]];
+        }
+        return item;
     },
     dropHandlers: function() {
         return {
@@ -470,14 +476,18 @@ Template.web.helpers({
                     if (file.size < 1000000000) {
                         console.log("upload", file);
                         if (rtc) {
+                            reactive.uploading.set(file);
                             rtc.sendFile(file, {
                                 onProgress: function(i) {
-                                    $('#upload > .progress').progress({
+                                    $('.files .progress').progress({
                                         percent: Math.round(i * 100 / file.size)
                                     });
                                 },
                                 onComplete: function(file) {
                                     console.log("completed upload of file", file);
+                                    reactive.uploading.set(false);
+                                    // update file listing
+                                    rtc.dataChannel.send(JSON.stringify({cmd: "ls"}));
                                 }
                             });
                         }

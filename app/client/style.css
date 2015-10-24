@@ -17,6 +17,7 @@ body.web {
 /*     background: url("/imgs/17161382542_f1756e55a1_o.jpg"); */
 /*     background-size: cover; */
     overflow: auto;
+    background-color: #f1f1f1;
 }
 
 /* .segment { */

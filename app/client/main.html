@@ -265,33 +265,45 @@
               <span>Manage Files</span>
               <p></p>
 
-              {{#with (reactive "ls")}}
-              Directory: {{path}}
-              <div class="ui segment files">
-                {{> filedrop dropHandlers}}
+              {{#filedrop dropHandlers}}
+              <!-- 
 
-                {{#if filedrop_over}}
-                <div class="ui segment red">
-                  Drop it!
+
+
+TODO, #HERE the above two don't get along! 
+
+
+
+-->
+              <div class="ui segment files {{#if filedrop_over}} red {{else}} {{#if filedrop_window}} orange {{/if}}{{/if}}">
+
+                {{#if (reactive "ls")}}                
+                <div class="ui top left attached label">
+                  Directory: {{reactive "ls" "path"}}
                 </div>
+                
+                {{#if filedrop_over}}
+                <div>Drop it!</div>
                 {{else}}
                 {{#if filedrop_window}}
-                <div class="ui segment orange">
-                  Drop Files Here!
+                <div>Drop Files Here!</div>
+                {{else}}
+                {{#if (reactive "uploading")}}
+                <div class="ui tiny progress" data-percent="0">
+                  <div class="bar" style="width: 0%;">
+                  </div>
+                  <div class="label">{{reactive "uploading" "name"}}</div>
                 </div>
                 {{else}}
-                <div class="ui segment" id="upload">                 
-                  Drop Files Here
-                  <div class="ui progress" data-percent="0">
-                    <div class="bar" style="width: 0%;">
-                      <div class="progress">0%</div>
-                    </div>
-                  </div>
-                </div>
+                <div>Drop Files Here</div>
                 {{/if}}
                 {{/if}}
-               
+                {{/if}}
+                {{else}}
+                No direct connection.
+                {{/if}}
                 
+                {{#with (reactive "ls")}}
                 <div class="ui list">
                   {{#each data}}
                   <a class="item">
@@ -302,8 +314,9 @@
                   </a>
                   {{/each}}
                 </div>
+                {{/with}}
               </div>
-              {{/with}}
+              {{/filedrop}}
             </div>
 
 
