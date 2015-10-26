@@ -85,66 +85,53 @@
           <div class="content">
             TyPhone
             <div class="sub header">
-              Remote control your phone. Just install the app, open
-              it, scan the QR code on this page, or login here and in
-              the app.
+              Remote control your phone.
             </div>
           </div>
         </h2>
+        <p>
+          Just install the app, open it, and scan the QR code below or
+          login here and in the app.
+        </p>
         
-          <!-- <div class="ui grid"> -->
-          <!--   <div class="two wide column"> -->
-          <!--     <img src="imgs/logo_hires_trans.png" -->
-          <!--          style="width: 100%"/> -->
-
-          <!--     <a href="https://play.google.com/store/apps/details?id=com.idimbn19udlnf6trycde"> -->
-          <!--       <img alt="Get it on Google Play" -->
-          <!--            src="https://developer.android.com/images/brand/en_generic_rgb_wo_45.png" /> -->
-          <!--     </a> -->
-              
-          <!--   </div> -->
-          <!--   <div class="fourteen wide column"> -->
-          <!--     <h1 class="ui header">TyPhone</h1> -->
-          <!--     <p> -->
-          <!--       Remote control your phone. Just install the app, open it, -->
-          <!--       scan the QR code on this page, or login here and in the -->
-          <!--       app. -->
-          <!--     </p> -->
-
-          <div class="ui grid">
-            <div class="four wide column">
-              <a href="https://play.google.com/store/apps/details?id=com.idimbn19udlnf6trycde">
-                <img alt="Get it on Google Play"
-                     src="https://developer.android.com/images/brand/en_generic_rgb_wo_45.png" />
-              </a>
-            </div>
-            
-            <div class="four wide column">
-              <div id="qrcode"></div>
-              {{> loginButtons}}
-            </div>
-            
-            <div class="eight wide column connections">
-              Connected to:
-              <ul>
-                {{#each connections}}
-                {{#if device}}
-                <li>
-                  <i class="icon ion-iphone"></i>
-                  {{device.model}}
-                  ({{device.platform}} {{device.version}}, {{ip}})
-                </li>
-                {{/if}}
-                {{else}}
-                Nothing.
-                {{/each}}
-              </ul>
+        <div class="ui grid">
+          <div class="four wide column">
+            <a href="https://play.google.com/store/apps/details?id=com.idimbn19udlnf6trycde">
+              <img alt="Get it on Google Play"
+                   src="https://developer.android.com/images/brand/en_generic_rgb_wo_45.png" />
+            </a>
+          </div>
+          
+          <div class="six wide column">
+            <div class="ui three column very relaxed grid">
+              <div class="column">
+                <div id="qrcode"></div>
+              </div>
+              <div class="ui vertical divider">
+                OR
+              </div>
+              <div class="column">
+                {{> loginButtons}}
+              </div>
             </div>
           </div>
-              
-            <!-- </div> -->
-          <!-- </div> -->
-        <!-- </div> -->
+          
+          <div class="six wide column connections">
+            Connected to:
+            <ul>
+              {{#each connections}}
+              <li>
+                <i class="icon ion-iphone"></i>
+                {{device.model}}
+                ({{device.platform}} {{device.version}}, {{ip}})
+              </li>
+              {{else}}
+              Nothing
+              {{/each}}
+            </ul>
+          </div>
+        </div>
+        
       </div>
     </div>
 
@@ -156,7 +143,7 @@
         <div class="ui two column doubling grid">
           <div class="column">
             
-            <div class="ui raised segment clipboard">
+            <div class="ui raised segment clipboard {{reactive 'disabled'}}">
               <div class="ui red ribbon label">
                 <i class="ion-clipboard icon"></i>
                 Clipboard
@@ -168,13 +155,14 @@
                   <input data-cmd="clipboard" type="text"
                          data-field="text"
                          class="action"
+                         {{reactive "disabled"}}
                          placeholder=" text to copy to clipboard">
                   <i class="ion-clipboard icon"></i>
                 </div>
               </div>
             </div>
 
-            <div class="ui raised segment url">
+            <div class="ui raised segment url {{reactive 'disabled'}}">
               <div class="ui green ribbon label">
                 <i class="ion-android-globe icon"></i>
                 Web
@@ -186,13 +174,14 @@
                   <input data-cmd="url"
                          data-field="text"
                          class="action"
+                         {{reactive 'disabled'}}
                          type="text" value="http://">
                   <i class="ion-android-globe icon"></i>
                 </div>
               </div>
             </div>
 
-            <div class="ui raised segment maps">
+            <div class="ui raised segment maps {{reactive 'disabled'}}">
               <div class="ui blue ribbon label">
                 <i class="ion-map icon"></i>
                 Maps
@@ -204,6 +193,7 @@
                   <input data-cmd="maps"
                          data-field="text"
                          class="action"
+                         {{reactive 'disabled'}}
                          type="text" placeholder=" cologne cathedral">
                   <i class="ion-map icon"></i>
                 </div>
@@ -211,7 +201,7 @@
             </div>
 
 
-            <div class="ui raised segment sms">
+            <div class="ui raised segment sms {{reactive 'disabled'}}">
               <div class="ui yellow ribbon label">
                 <i class="ion-android-textsms icon"></i>
                 SMS
@@ -221,6 +211,7 @@
               <div class="ui form">
                 <div class="ui fluid left icon input field">
                   <input data-field="number" type="text"
+                         {{reactive 'disabled'}}
                          placeholder="+1 555 555-5555">
                   <i class="ion-pound icon"></i>
                 </div>
@@ -229,6 +220,7 @@
                             data-field="message"
                             rows="2"
                             class="action"
+                            {{reactive 'disabled'}}
                             placeholder="What's up?"></textarea>
                   <i class="ion-android-textsms icon"></i>
                 </div>
@@ -240,7 +232,7 @@
           <!-- ........................................ -->
           
           <div class="column">
-            <div class="ui raised segment url">
+            <div class="ui raised segment tel {{reactive 'disabled'}}">
               <div class="ui black ribbon label">
                 <i class="ion-android-call icon"></i>
                 Phone
@@ -252,13 +244,14 @@
                   <input data-cmd="tel"
                          data-field="number"
                          class="action"
+                         {{reactive 'disabled'}}
                          placeholder="+1 555 555-5555">
                   <i class="ion-android-call icon"></i>
                 </div>
               </div>
             </div>
 
-            <div class="ui raised segment files">
+            <div class="ui raised segment files {{reactive 'disabled'}}">
               <div class="ui purple ribbon label">
                 <i class="ion-document icon"></i>
                 Files

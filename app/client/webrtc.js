@@ -87,6 +87,12 @@ WebRTC = class {
         // sendChannel.binaryType = 'arraybuffer';
         // sendChannel.send(data); // example
 
+        sendChannel.onclose = function(event) {
+            if (handlers.onClose) {
+                handlers.onClose(event);
+            }            
+        }
+        
         if (isCaller) {
             // make offer
             pc.createOffer(function(description) {

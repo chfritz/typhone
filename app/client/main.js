@@ -10,7 +10,8 @@ rtc = null;
 var reactive = {
     ls: new ReactiveVar(null),
     uploading: new ReactiveVar(false),
-    downloading: new ReactiveVar(false)
+    downloading: new ReactiveVar(false),
+    disabled: new ReactiveVar("disabled") // set to "" when active
 };
 
 var expectedFile;
@@ -326,7 +327,7 @@ Template.mobile.events({
                 sessions.push(result.text);
                 Meteor.subscribe('clipboard', result.text, device);
                 // startRTC(false, result.text);
-                startWebRTC(id);
+                startWebRTC(result.text);
             }, 
             function (error) {
                 console.log("Scanning failed: " + error);
@@ -335,7 +336,9 @@ Template.mobile.events({
     },
     'click .remove': function() {
         console.log("remove " + JSON.stringify(this));
-        Clipboard.remove(this._id);        
+        Clipboard.remove(this._id);
+        rtc.dataChannel.close();
+        rtc.peerConnection.close();
     }
 });
 
@@ -389,6 +392,11 @@ function startWebRTC(id) {
             },
             onArrayBuffer: function(data) {
                 receiveDataWeb(data);
+            },
+            onClose: function() {
+                console.log("onClose");
+                reactive.ls.set(null);
+                reactive.disabled.set("disabled");
             }
         });
     }
@@ -465,11 +473,21 @@ Template.web.helpers({
         var data = Clipboard.findOne();
         // console.log("data", data);
         if (data) {
-            return _.map(data.connections, function(conn) {
-                return { ip: conn.clientAddress,
-                         agent: conn.httpHeaders["user-agent"],
-                         device: conn.device };
-            });
+            var connections = _.reduce(data.connections, function(memo, conn) {
+                if (conn.device) {
+                    memo.push({ ip: conn.clientAddress,
+                                agent: conn.httpHeaders["user-agent"],
+                                device: conn.device });
+                }
+                return memo;
+            }, []);
+            console.log("connections", connections);
+            if (connections.length > 0) {
+                reactive.disabled.set("");
+            } else {
+                reactive.disabled.set("disabled");
+            }
+            return connections;
         }
     },
     webrtc: function() {

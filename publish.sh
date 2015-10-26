@@ -12,3 +12,5 @@ mv production.apk production.apk.bak
 ~/.meteor/android_bundle/android-sdk/build-tools/20.0.0/zipalign 4 release-unsigned.apk production.apk
 
 echo "$DIR/android/production.apk is your apk, now go to https://play.google.com/apps/publish"
+
+echo "iOS: go to $DIR/ios/project and open MyApp.xcodeproj"
