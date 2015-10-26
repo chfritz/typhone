@@ -342,6 +342,13 @@ Template.mobile.events({
     }
 });
 
+Template.layout.events({
+    'click .refresh': function() {
+        console.log("refresh");
+        window.location.reload();
+    }
+});
+
 // Template.mobile.helpers({
 //     peers: function() {
 //         var data = Clipboard.findOne();

@@ -16,13 +16,18 @@ WebRTC = class {
         logger("starting RTC on channel: " + channel);
         handlers = handlers || {};
         
-        var peerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection
-            || window.webkitRTCPeerConnection || window.msRTCPeerConnection;
-        var sessionDescription = window.RTCSessionDescription ||
-            window.mozRTCSessionDescription ||
-            window.webkitRTCSessionDescription || window.msRTCSessionDescription;
-        var getUserMedia = navigator.getUserMedia || navigator.mozGetUserMedia
-            || navigator.webkitGetUserMedia || navigator.msGetUserMedia;
+        var peerConnection = window.RTCPeerConnection
+            || window.mozRTCPeerConnection
+            || window.webkitRTCPeerConnection
+            || window.msRTCPeerConnection;
+        var sessionDescription = window.RTCSessionDescription
+            || window.mozRTCSessionDescription
+            || window.webkitRTCSessionDescription
+            || window.msRTCSessionDescription;
+        var getUserMedia = navigator.getUserMedia
+            || navigator.mozGetUserMedia
+            || navigator.webkitGetUserMedia
+            || navigator.msGetUserMedia;
 
         var pc = this.pc = new peerConnection(
             // configuration,
@@ -93,25 +98,6 @@ WebRTC = class {
             }            
         }
         
-        if (isCaller) {
-            // make offer
-            pc.createOffer(function(description) {
-                // offer = description;
-                logger("createdOffer", description);
-                pc.setLocalDescription(description, function() {
-                    Signaling.insert({
-                        channel: channel,
-                        offer: toObject(description) //.toJSON()
-                    });
-                }, function(err) {
-                    logger("couldn't set local description", err);
-                });
-            }, function(err) {
-                logger("couldn't create offer", err);
-            });
-        }
-
-        
         // ---------------------------------------------------------
         // Signaling
 
@@ -166,11 +152,36 @@ WebRTC = class {
             }
         }
         
+        Meteor.subscribe('signaling', channel, isCaller);
+        
         Signaling.find({channel: channel}).observeChanges({
             added: update,
             changed: update
         });
-        Meteor.subscribe('signaling', channel);
+
+        // ---------------------------------------------------------
+        // Caller
+        
+        if (isCaller) {
+            // make offer
+            pc.createOffer(function(description) {
+                // offer = description;
+                logger("createdOffer", description);
+                pc.setLocalDescription(description, function() {
+                    Signaling.insert({
+                        channel: channel,
+                        offer: toObject(description) //.toJSON()
+                    });
+                }, function(err) {
+                    logger("couldn't set local description", err);
+                });
+            }, function(err) {
+                logger("couldn't create offer", err);
+            });
+        }
+
+        
+
     }
 
     get peerConnection() { return this.pc; }
@@ -233,5 +244,3 @@ WebRTC = class {
         sendNextSlice();
     }    
 };
-
-

@@ -1,4 +1,11 @@
 
-- on simulator I had to embedd the AVFramework libraryL
+* TODOs:
 
+** remove insecure
+** figure out timing issues with Signaling when using user id as channel
+
+
+* NOTES
+
+- on simulator I had to embedd the AVFramework library:
 /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk/System/Library/Frameworks
