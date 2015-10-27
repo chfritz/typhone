@@ -86,9 +86,10 @@ WebRTC = class {
                 handlers.onDataChannel(event);
             }            
         };
-        
+
         sendChannel = this.sendChannel =
-            pc.createDataChannel("sendDataChannel", {reliable: true});
+            pc.createDataChannel("sendDataChannel_caller_" + isCaller,
+                                 {reliable: true});
         // sendChannel.binaryType = 'arraybuffer';
         // sendChannel.send(data); // example
 

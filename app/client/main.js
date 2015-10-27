@@ -276,38 +276,38 @@ Template.mobile.onRendered(function() {
             changed: function(newDoc, oldDoc) {
                 console.log("change: " + JSON.stringify(newDoc));
 
-                if (newDoc.connections.length < 2) { 
+                // if (newDoc.connections.length < 2) { 
                     // Router.go('/');
                     // TODO: add a flash message or something?
                     // stop this subscription
-                    Clipboard.remove(newDoc._id);
-                } else {
+                    // Clipboard.remove(newDoc._id);
+                // } else {
                 
-                    if (newDoc.cmd == "clipboard") {
-                        cordova.plugins.clipboard.copy(newDoc.text);
+                if (newDoc.cmd == "clipboard") {
+                    cordova.plugins.clipboard.copy(newDoc.text);
 
-                    } else if (newDoc.cmd == "maps") {
-                        window.open("geo:0,0?q=" + newDoc.text,
-                                    '_system', 'location=yes');
+                } else if (newDoc.cmd == "maps") {
+                    window.open("geo:0,0?q=" + newDoc.text,
+                                '_system', 'location=yes');
 
-                    } else if (newDoc.cmd == "url") {
-                        window.open(newDoc.text, '_system');
+                } else if (newDoc.cmd == "url") {
+                    window.open(newDoc.text, '_system');
 
-                    } else if (newDoc.cmd == "tel") {
-                        window.open("tel:" + newDoc.number,
-                                    '_system', 'location=yes');
+                } else if (newDoc.cmd == "tel") {
+                    window.open("tel:" + newDoc.number,
+                                '_system', 'location=yes');
 
-                    } else if (newDoc.cmd == "sms") {
-                        console.log("sending sms");
-                        sms.send(newDoc.number, newDoc.message, {},
-                                 function() {
-                                     console.log("sms sent");
-                                 },
-                                 function(e) {
-                                     console.log("sms not sent: " + e);
-                                 });
-                    }
+                } else if (newDoc.cmd == "sms") {
+                    console.log("sending sms");
+                    sms.send(newDoc.number, newDoc.message, {},
+                             function() {
+                                 console.log("sms sent");
+                             },
+                             function(e) {
+                                 console.log("sms not sent: " + e);
+                             });
                 }
+                // }
             }
         });
 

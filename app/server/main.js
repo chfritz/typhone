@@ -23,6 +23,7 @@ Meteor.publish('clipboard', function(id, device) {
         if (device) {
             connection.device = device;
         }
+        
         Clipboard.update(id, {
             $push: {connections: connection}
         });
@@ -64,7 +65,7 @@ Meteor.publish('signaling', function(channel, isCaller) {
         this.onStop(function() {
             Signaling.update({channel: channel, count: {$exists: 1}},
                              {$inc: {count: -1}});
-            if (Signaling.findOne({channel: channel, count: {$exists: 1}}).count == 0) {
+            if (isCaller || Signaling.findOne({channel: channel, count: {$exists: 1}}).count == 0) {
                 Signaling.remove({channel: channel});
             }
         });
