@@ -29,74 +29,104 @@ WebRTC = class {
             || navigator.webkitGetUserMedia
             || navigator.msGetUserMedia;
 
-        var pc = this.pc = new peerConnection(
-            // configuration,
-            {"iceServers": [{"url": "stun:stun.l.google.com:19302"}]},
-            // {optional: [{RtpDataChannels: true}]}
-            null
-        );
-        logger("created peerConnection", pc);
-        
-        // send any ice candidates to the other peer
-        pc.onicecandidate = function (evt) {
-            if (evt.candidate) {
-                logger("onICECandidate", evt);
-                Signaling.insert({
-                    channel: channel,
-                    type: (isCaller ? "caller" : "receiver"),
-                    candidate: toObject(evt.candidate) // .toJSON()
-                });
-            }
-        };
-
-        // once remote stream arrives, show it in the remote video element
-        // pc.onaddstream = function (evt) {
-        //     remoteView.src = URL.createObjectURL(evt.stream);
-        // };
-
-        // get the local stream, show it in the local video element and send it
-        // getUserMedia({ "audio": true, "video": true }, function (stream) {
-        //     selfView.src = URL.createObjectURL(stream);
-        //     pc.addStream(stream);
-        // });
-
+        var self = this;
+        var pc;
         var sendChannel;
-        pc.ondatachannel = function(event) {
-            logger("got data channel");
-            // sendChannel.send("ok");
-            receiveChannel = event.channel;
-            receiveChannel.onmessage = function(event){
-                // logger("got message");
-                var handler;
-                if (event.data instanceof ArrayBuffer) {
-                    handler = "onArrayBuffer";
-                    // sendChannel.send("ok");
-                } else if (event.data instanceof Blob) {
-                    handler = "onBlob";
-                } else if (typeof event.data === "string") {
-                    handler = "onText";
-                }
-                // logger("message type: " + handler);
-                if (handler && handlers[handler]) {
-                    handlers[handler](event.data);
+        function connect() {       
+            pc = self.pc = new peerConnection(
+                // configuration,
+                {"iceServers": [{"url": "stun:stun.l.google.com:19302"}]},
+                // {optional: [{RtpDataChannels: true}]}
+                null
+            );
+            logger("created peerConnection", pc);
+            
+            // send any ice candidates to the other peer
+            pc.onicecandidate = function (evt) {
+                if (evt.candidate) {
+                    logger("onICECandidate", evt);
+                    Signaling.insert({
+                        channel: channel,
+                        type: (isCaller ? "caller" : "receiver"),
+                        candidate: toObject(evt.candidate) // .toJSON()
+                    });
                 }
             };
 
-            if (handlers.onDataChannel) {
-                handlers.onDataChannel(event);
-            }            
-        };
+            // once remote stream arrives, show it in the remote video element
+            // pc.onaddstream = function (evt) {
+            //     remoteView.src = URL.createObjectURL(evt.stream);
+            // };
 
-        sendChannel = this.sendChannel =
-            pc.createDataChannel("sendDataChannel_caller_" + isCaller,
-                                 {reliable: true});
-        // sendChannel.binaryType = 'arraybuffer';
-        // sendChannel.send(data); // example
+            // get the local stream, show it in the local video element and send it
+            // getUserMedia({ "audio": true, "video": true }, function (stream) {
+            //     selfView.src = URL.createObjectURL(stream);
+            //     pc.addStream(stream);
+            // });
 
-        sendChannel.onclose = function(event) {
-            if (handlers.onClose) {
-                handlers.onClose(event);
-            }            
+            pc.ondatachannel = function(event) {
+                logger("got data channel");
+                // sendChannel.send("ok");
+                receiveChannel = event.channel;
+                receiveChannel.onmessage = function(event){
+                    // logger("got message");
+                    var handler;
+                    if (event.data instanceof ArrayBuffer) {
+                        handler = "onArrayBuffer";
+                        // sendChannel.send("ok");
+                    } else if (event.data instanceof Blob) {
+                        handler = "onBlob";
+                    } else if (typeof event.data === "string") {
+                        handler = "onText";
+                    }
+                    // logger("message type: " + handler);
+                    if (handler && handlers[handler]) {
+                        handlers[handler](event.data);
+                    }
+                };
+
+                if (handlers.onDataChannel) {
+                    handlers.onDataChannel(event);
+                }            
+            };
+
+            sendChannel = self.sendChannel =
+                pc.createDataChannel("sendDataChannel_caller_" + isCaller,
+                                     {reliable: true});
+            // sendChannel.binaryType = 'arraybuffer';
+            // sendChannel.send(data); // example
+
+            sendChannel.onclose = function(event) {
+                if (handlers.onClose) {
+                    handlers.onClose(event);
+                }            
+            }
+
+            // ---------------------------------------------------------
+            // Caller
+            
+            if (isCaller) {
+                // make offer
+                pc.createOffer(function(description) {
+                    // offer = description;
+                    logger("createdOffer", description);
+                    pc.setLocalDescription(description, function() {
+                        Signaling.insert({
+                            channel: channel,
+                            offer: toObject(description) //.toJSON()
+                        });
+                    }, function(err) {
+                        logger("couldn't set local description", err);
+                    });
+                }, function(err) {
+                    logger("couldn't create offer", err);
+                });
+            }
+            
+        }
+
+        function disconnect() {
+            self.pc = null;
         }
         
         // ---------------------------------------------------------
@@ -151,6 +181,12 @@ WebRTC = class {
                  || (isCaller && data.type == "receiver"))) {
                 pc.addIceCandidate(new RTCIceCandidate(data.candidate));
             }
+            if (data.count >= 2) {
+                // establish peer connection
+                connect();
+            } else if (data.count < 2) {
+                disconnect();
+            }
         }
         
         Meteor.subscribe('signaling', channel, isCaller);
@@ -159,29 +195,7 @@ WebRTC = class {
             added: update,
             changed: update
         });
-
-        // ---------------------------------------------------------
-        // Caller
-        
-        if (isCaller) {
-            // make offer
-            pc.createOffer(function(description) {
-                // offer = description;
-                logger("createdOffer", description);
-                pc.setLocalDescription(description, function() {
-                    Signaling.insert({
-                        channel: channel,
-                        offer: toObject(description) //.toJSON()
-                    });
-                }, function(err) {
-                    logger("couldn't set local description", err);
-                });
-            }, function(err) {
-                logger("couldn't create offer", err);
-            });
-        }
-
-        
+      
 
     }
 
