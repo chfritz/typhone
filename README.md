@@ -4,7 +4,7 @@ An open-source, meteor-based web service and app for controlling your smartphone
 
 ## Try the demo
 
- - Install the app from (play store)[https://play.google.com/store/apps/details?id=com.idimbn19udlnf6trycde]
+ - Install the app from the [play store](https://play.google.com/store/apps/details?id=com.idimbn19udlnf6trycde)
  - Type `typhone.xyz` in a browser on the same network
  - Scan QR code
  - Remote control the phone
