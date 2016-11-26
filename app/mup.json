@@ -2,7 +2,7 @@
   // Server authentication info
   "servers": [
     {
-      "host": "typhone.xyz",
+      "host": "52.43.133.129", // typhone.xyz
       "username": "ubuntu",
       // "password": "password"
       // or pem file (ssh based authentication)
